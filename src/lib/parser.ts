@@ -1,153 +1,220 @@
 import type { ParsedDay, ParsedExercise, ParseResult } from '../types';
 
-// ─── Keywords ─────────────────────────────────────────────────────────────────
+// ─── Day header whitelist ─────────────────────────────────────────────────────
+// Only these patterns are accepted as day section headers.
+// Anything else (medical context, goals, equipment notes) is ignored as a header.
 
-const REST_KEYWORDS = /descanso|rest\b|recuperaci[oó]n/i;
-const ACTIVE_REST_KEYWORDS = /descanso\s+activo|active\s+rest|movilidad|mobility|stretching|estiramiento|caminata/i;
-const DAY_HEADER_PATTERN = /^(.+?)\s*[:：]\s*$/;
-const BULLET_PATTERN = /^[\-\*•·▪▸►]\s+(.+)$/;
-const NUMBERED_PATTERN = /^\d+[.)]\s+(.+)$/;
+const DAY_HEADER_WHITELIST: RegExp[] = [
+  /^d[ií]a\s*[a-z0-9]/i,          // Día A, Día 1, Day A, Día A-B
+  /^lunes\b/i,
+  /^martes\b/i,
+  /^mi[eé]rcoles\b/i,
+  /^jueves\b/i,
+  /^viernes\b/i,
+  /^s[aá]bado\b/i,
+  /^domingo\b/i,
+  /^descanso/i,                    // Descanso, Descanso activo
+  /^movilidad/i,
+  /^trabajo\s+postural/i,
+  /^todos\s+los\s+d[ií]as/i,
+  /^calentamiento/i,
+  /^enfriamiento/i,
+  /^gl[uú]teos/i,                  // Glúteos (muscle-focused day name)
+  /^piernas/i,
+  /^espalda/i,
+  /^pecho/i,
+  /^hombros/i,
+  /^brazos/i,
+  /^core/i,
+  /^full.?body/i,
+  /^bloque\s/i,
+  /^semana\s/i,
+  /^entrenamiento\s/i,
+];
+
+// Lines containing these phrases are advisory/contextual — never treated as exercises
+const CONTEXT_SIGNALS: RegExp[] = [
+  /\btienes?\b/i,
+  /\btenés?\b/i,
+  /\bdispon[eé]s?\b/i,
+  /\btu objetivo\b/i,
+  /\byo har[ií]a\b/i,
+  /\bconsulta[r]?\b/i,
+  /\bespecialista\b/i,
+  /\bm[eé]dico\b/i,
+  /\bdiagn[oó]stico\b/i,
+  /\bs[ií]ntoma\b/i,
+  /\blesi[oó]n\b/i,
+  /\bsi puedes\b/i,
+  /\bsi no puedes\b/i,
+  /\brecomiendo\b/i,
+  /\bsugiero\b/i,
+  /\bdependiendo\b/i,
+  /\bprogresa\b/i,
+  /\ben tu caso\b/i,
+  /\bpor eso\b/i,
+  /\brecuerda\b/i,
+  /\bimportante\b/i,
+  /\bobjetivo\b/i,
+  /\bprogres[ií]/i,
+];
+
+// An exercise line MUST have at least one of these to be accepted
+const EXERCISE_SIGNALS: RegExp[] = [
+  /\d+\s*[x×]\s*[\d]/i,                      // 4x10, 3×8-12
+  /\d+\s+series?\b/i,                         // 3 series
+  /\d+\s+reps?\b/i,                           // 10 reps
+  /\d+\s+repeticiones?\b/i,                   // 12 repeticiones
+  /\d+\s*seg(?:undos?)?\b/i,                  // 30 seg / 30 segundos
+  /\d+\s*min(?:utos?)?\b/i,                   // 2 min
+  /\d+(?:[.,]\d+)?\s*(?:kg|kgs|lb|lbs)\b/i,  // 25 kg, 7.5kg
+];
+
+// ─── Extraction patterns ──────────────────────────────────────────────────────
+
+const SETS_REPS_PATTERN = /(\d+)\s*[x×]\s*([\d]+(?:[.,]\d+)?(?:\s*[-–]\s*[\d]+)?)/i;
+const SERIES_PATTERN = /(\d+)\s+series?(?:\s+de\s+([\d][\d\-]*(?:\s*(?:seg(?:undos?)?|min(?:utos?)?))?))?/i;
+const REPS_PATTERN = /^(\d+)\s+reps?\b/i;
+const WEIGHT_PATTERN = /(\d+(?:[.,]\d+)?)\s*(?:kg|kgs|lb|lbs)\b/i;
+const REST_SECONDS_PATTERN = /(?:descanso|rest)[:\s]+(\d+)\s*s(?:eg)?|(\d+)\s*s(?:eg)?\s+(?:descanso|rest)/i;
 const URL_PATTERN = /https?:\/\/[^\s]+/i;
-
-// Sets x Reps: "4x10", "3 x 12", "4×10"
-const SETS_REPS_PATTERN = /(\d+)\s*[x×]\s*(\d+(?:\.\d+)?)/i;
-// Weight: "25 kg", "7.5kg", "25lb"
-const WEIGHT_PATTERN = /(\d+(?:[.,]\d+)?)\s*(?:kg|kgs|lb|lbs)/i;
-// Duration: "30 segundos", "30s", "1 min"
-const DURATION_PATTERN = /(\d+)\s*(?:seg(?:undos?)?|s\b|min(?:utos?)?)/i;
-// Rest: "60s descanso", "descanso 60s"
-const REST_SECONDS_PATTERN = /(?:descanso|rest)\s+(\d+)\s*s|(\d+)\s*s\s+(?:descanso|rest)/i;
+const BULLET_PATTERN = /^[\-\*•·▪▸►]\s+(.+)$/;
+const NUMBERED_ITEM_PATTERN = /^\d+[.)]\s+(.+)$/;
+const ACTIVE_REST_KEYWORDS = /descanso\s+activo|active\s+rest|movilidad|mobility|stretching|estiramiento|caminata/i;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function extractUrl(text: string): { url: string | undefined; cleaned: string } {
-  const match = URL_PATTERN.exec(text);
-  if (!match) return { url: undefined, cleaned: text };
-  return {
-    url: match[0],
-    cleaned: text.replace(match[0], '').trim(),
-  };
+function isContextual(text: string): boolean {
+  return CONTEXT_SIGNALS.some(p => p.test(text));
+}
+
+function hasExerciseSignal(text: string): boolean {
+  return EXERCISE_SIGNALS.some(p => p.test(text));
+}
+
+function extractUrl(text: string): { url?: string; cleaned: string } {
+  const m = URL_PATTERN.exec(text);
+  if (!m) return { cleaned: text };
+  return { url: m[0], cleaned: text.replace(m[0], '').trim() };
 }
 
 function parseSetsReps(text: string): { sets?: number; reps?: string; cleaned: string } {
-  // First check if it's a time-based exercise ("3x30 segundos")
-  const timePart = DURATION_PATTERN.exec(text);
-  const setsRepsMatch = SETS_REPS_PATTERN.exec(text);
-
-  if (setsRepsMatch) {
-    const sets = parseInt(setsRepsMatch[1]);
-    const repsRaw = setsRepsMatch[2];
-    // Check if after the reps value there's a time unit
-    const afterSetsReps = text.slice(setsRepsMatch.index + setsRepsMatch[0].length).trim();
-    const timeUnit = /^(seg(?:undos?)?|s\b|min(?:utos?)?)/i.exec(afterSetsReps);
+  const srm = SETS_REPS_PATTERN.exec(text);
+  if (srm) {
+    const sets = parseInt(srm[1]);
+    const repsRaw = srm[2];
+    const after = text.slice(srm.index + srm[0].length).trim();
+    const timeUnit = /^(seg(?:undos?)?|min(?:utos?)?)/.exec(after);
     const reps = timeUnit ? `${repsRaw} ${timeUnit[0]}` : repsRaw;
-    const cleaned = text.replace(setsRepsMatch[0], '').replace(timeUnit ? timeUnit[0] : '', '').trim();
+    const cleaned = text.replace(srm[0], '').replace(timeUnit ? timeUnit[0] : '', '').trim();
     return { sets, reps, cleaned };
   }
 
-  if (timePart) {
-    // Something like "3 series de 30 segundos"
-    const seriesMatch = /(\d+)\s*series/i.exec(text);
-    if (seriesMatch) {
-      return {
-        sets: parseInt(seriesMatch[1]),
-        reps: `${timePart[1]} ${timePart[0].replace(timePart[1], '').trim()}`,
-        cleaned: text.replace(seriesMatch[0], '').replace(timePart[0], '').trim(),
-      };
-    }
+  const sm = SERIES_PATTERN.exec(text);
+  if (sm) {
+    return {
+      sets: parseInt(sm[1]),
+      reps: sm[2] || undefined,
+      cleaned: text.replace(sm[0], '').trim(),
+    };
+  }
+
+  const rm = REPS_PATTERN.exec(text);
+  if (rm) {
+    return { reps: rm[1], cleaned: text.replace(rm[0], '').trim() };
   }
 
   return { cleaned: text };
 }
 
 function parseWeight(text: string): { weight?: number; cleaned: string } {
-  const match = WEIGHT_PATTERN.exec(text);
-  if (!match) return { cleaned: text };
-  const weight = parseFloat(match[1].replace(',', '.'));
-  return { weight, cleaned: text.replace(match[0], '').trim() };
+  const m = WEIGHT_PATTERN.exec(text);
+  if (!m) return { cleaned: text };
+  return { weight: parseFloat(m[1].replace(',', '.')), cleaned: text.replace(m[0], '').trim() };
 }
 
 function parseRestSeconds(text: string): { restSeconds?: number; cleaned: string } {
-  const match = REST_SECONDS_PATTERN.exec(text);
-  if (!match) return { cleaned: text };
-  const seconds = parseInt(match[1] || match[2]);
-  return { restSeconds: seconds, cleaned: text.replace(match[0], '').trim() };
+  const m = REST_SECONDS_PATTERN.exec(text);
+  if (!m) return { cleaned: text };
+  return { restSeconds: parseInt(m[1] || m[2]), cleaned: text.replace(m[0], '').trim() };
 }
 
-/** Clean up leftover punctuation after extraction */
 function cleanRemnants(text: string): string {
-  return text
-    .replace(/^[,;:\-\s]+|[,;:\-\s]+$/g, '')
-    .replace(/\s{2,}/g, ' ')
-    .trim();
+  return text.replace(/^[,;:\-\s]+|[,;:\-\s]+$/g, '').replace(/\s{2,}/g, ' ').trim();
+}
+
+function stripMarkdown(line: string): string {
+  return line.replace(/\*+/g, '').replace(/^#+\s*/, '').replace(/_+/g, '').trim();
 }
 
 /**
- * Parse a single exercise line into a ParsedExercise.
- * Whatever can't be parsed goes into `notes`.
+ * Returns null if the line doesn't look like an exercise.
+ * Only accepts lines with explicit sets/reps signals and no contextual phrases.
  */
-function parseExerciseLine(line: string): ParsedExercise {
-  const { url, cleaned: afterUrl } = extractUrl(line);
-  const { sets, reps, cleaned: afterSetsReps } = parseSetsReps(afterUrl);
-  const { weight, cleaned: afterWeight } = parseWeight(afterSetsReps);
-  const { restSeconds, cleaned: afterRest } = parseRestSeconds(afterWeight);
+function parseExerciseLine(line: string): ParsedExercise | null {
+  if (isContextual(line)) return null;
+  if (!hasExerciseSignal(line)) return null;
 
-  // The name is what's left at the start before any commas or numbers
-  // Split by comma to find name and leftover notes
-  const parts = cleanRemnants(afterRest).split(',');
+  const { url, cleaned: c1 } = extractUrl(line);
+  const { sets, reps, cleaned: c2 } = parseSetsReps(c1);
+  const { weight, cleaned: c3 } = parseWeight(c2);
+  const { restSeconds, cleaned: c4 } = parseRestSeconds(c3);
+
+  const parts = cleanRemnants(c4).split(',');
   const name = cleanRemnants(parts[0]);
-  const leftover = parts.slice(1).join(',').trim();
+  if (!name) return null;
 
   return {
-    name: name || line.trim(),
+    name,
     sets,
     reps,
     weight,
     restSeconds,
     videoUrl: url,
-    notes: leftover || undefined,
+    notes: parts.slice(1).join(',').trim() || undefined,
   };
 }
 
 /**
- * Detect whether a line is a day/section header.
- * Returns the header text or null.
+ * Returns the header text if the line is a valid day header, or null.
+ * Requires the line to end with ":" (except markdown ## headings) AND
+ * match the day header whitelist.
  */
-function detectHeader(line: string): string | null {
-  // Match lines like "Día A:", "Lunes:", "Glúteos:", "Descanso:", "**Día A**:"
-  const cleaned = line.replace(/\*+/g, '').replace(/#+ /g, '').trim();
-  const match = DAY_HEADER_PATTERN.exec(cleaned);
-  if (match) return match[1].trim();
+function detectDayHeader(line: string): string | null {
+  const cleaned = stripMarkdown(line);
 
-  // Also match lines that are ALL CAPS with no colon if they look like titles
-  if (/^[A-ZÁÉÍÓÚÑ\s]+$/.test(cleaned) && cleaned.length > 2 && cleaned.length < 40) {
-    return cleaned;
+  // Markdown headings (## Día A) are always headers
+  if (/^#+\s/.test(line)) {
+    return cleaned || null;
+  }
+
+  // Must end with ":" to be a header
+  const m = /^(.+?)\s*[:：]\s*$/.exec(cleaned);
+  if (!m) return null;
+
+  const candidate = m[1].trim();
+  if (candidate.length > 60) return null; // sanity cap
+
+  if (DAY_HEADER_WHITELIST.some(p => p.test(candidate))) {
+    return candidate;
   }
 
   return null;
 }
 
-/** Extract the bullet/numbered line content */
 function extractBulletContent(line: string): string | null {
-  const bulletMatch = BULLET_PATTERN.exec(line);
-  if (bulletMatch) return bulletMatch[1].trim();
-  const numberedMatch = NUMBERED_PATTERN.exec(line);
-  if (numberedMatch) return numberedMatch[1].trim();
-  return null;
+  const m = BULLET_PATTERN.exec(line) ?? NUMBERED_ITEM_PATTERN.exec(line);
+  return m ? m[1].trim() : null;
 }
 
-// ─── Main Parser ──────────────────────────────────────────────────────────────
+// ─── Main parser ──────────────────────────────────────────────────────────────
 
 /**
- * Parse free-form routine text into structured ParseResult.
+ * Conservative free-text routine parser.
  *
- * Accepts flexible formats:
- *   Día A:            <- header
- *   - Hip Thrust: 4x10, 25kg
- *   * Sentadilla: 3x12
- *
- *   Descanso:         <- rest day header
- *   - Caminata
+ * Day headers: only explicit patterns (Día A:, Lunes:, Glúteos:, etc.)
+ * Exercises: only bullet/numbered lines that have sets×reps, kg, or duration
+ * Everything else: goes to day notes or generalNotes — never silently as exercises
  */
 export function parseRoutineText(text: string): ParseResult {
   const lines = text.split('\n').map(l => l.trimEnd());
@@ -159,48 +226,55 @@ export function parseRoutineText(text: string): ParseResult {
     const trimmed = line.trim();
     if (!trimmed) continue;
 
-    // Check for header
-    const header = detectHeader(trimmed);
+    // ── Day header? ───────────────────────────────────────────────────────────
+    const header = detectDayHeader(trimmed);
     if (header) {
       if (currentDay) days.push(currentDay);
       const isActiveRest = ACTIVE_REST_KEYWORDS.test(header);
-      const isRest = REST_KEYWORDS.test(header) && !isActiveRest;
+      const isRestOnly = /^descanso$/i.test(header);
       currentDay = {
         name: header,
-        type: isRest || isActiveRest ? 'active-rest' : 'workout',
+        type: isRestOnly || isActiveRest ? 'active-rest' : 'workout',
         exercises: [],
-        notes: undefined,
       };
       continue;
     }
 
-    // Check for bullet/numbered item
+    // ── Bullet / numbered item ────────────────────────────────────────────────
     const bulletContent = extractBulletContent(trimmed);
-    if (bulletContent) {
-      if (!currentDay) {
-        // Exercises without a header go into a default "Rutina" day
-        currentDay = { name: 'Rutina', type: 'workout', exercises: [] };
-      }
+    if (bulletContent !== null) {
       const exercise = parseExerciseLine(bulletContent);
-      if (exercise.name) {
+      if (exercise) {
+        if (!currentDay) {
+          currentDay = { name: 'Rutina', type: 'workout', exercises: [] };
+        }
         currentDay.exercises.push(exercise);
+      } else {
+        // Bullet but not an exercise → notes
+        if (currentDay) {
+          currentDay.notes = currentDay.notes
+            ? `${currentDay.notes}\n${bulletContent}`
+            : bulletContent;
+        } else {
+          generalNotes.push(bulletContent);
+        }
       }
       continue;
     }
 
-    // Plain line (not a header, not a bullet)
-    // Could be a note or an unlabeled exercise
+    // ── Plain line (no bullet, no header) ────────────────────────────────────
+    // Only add as exercise if it has an explicit signal AND no context keywords
     if (currentDay) {
-      // Try parsing as an exercise anyway (some people don't use bullets)
-      const couldBeExercise = /\d+x\d+|kg|lb|series/i.test(trimmed);
-      if (couldBeExercise) {
-        currentDay.exercises.push(parseExerciseLine(trimmed));
-      } else {
-        // Append as a note to the current day
-        currentDay.notes = currentDay.notes
-          ? `${currentDay.notes}\n${trimmed}`
-          : trimmed;
+      if (hasExerciseSignal(trimmed) && !isContextual(trimmed)) {
+        const exercise = parseExerciseLine(trimmed);
+        if (exercise) {
+          currentDay.exercises.push(exercise);
+          continue;
+        }
       }
+      currentDay.notes = currentDay.notes
+        ? `${currentDay.notes}\n${trimmed}`
+        : trimmed;
     } else {
       generalNotes.push(trimmed);
     }
