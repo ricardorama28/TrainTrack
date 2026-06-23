@@ -71,46 +71,47 @@ export function RestTimer({ seconds, onDone, onSkip }: RestTimerProps) {
   const pct = total > 0 ? remaining / total : 0;
 
   // SVG progress ring
-  const R = 54;
+  const R = 52;
   const C = 2 * Math.PI * R;
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-gray-900/95 backdrop-blur-sm p-6">
-      <p className="text-gray-400 text-sm uppercase tracking-widest mb-6">Descanso</p>
+    <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-gray-950/98 backdrop-blur-md p-6">
+      <p className="text-gray-500 text-xs uppercase tracking-[0.2em] font-semibold mb-8">Descanso</p>
 
-      <div className="relative w-44 h-44 mb-8">
+      <div className="relative w-56 h-56 mb-10">
         <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-          <circle cx="60" cy="60" r={R} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8" />
+          <circle cx="60" cy="60" r={R} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="10" />
           <circle
             cx="60"
             cy="60"
             r={R}
             fill="none"
             stroke="#22c55e"
-            strokeWidth="8"
+            strokeWidth="10"
             strokeLinecap="round"
             strokeDasharray={C}
             strokeDashoffset={C * (1 - pct)}
             style={{ transition: 'stroke-dashoffset 1s linear' }}
           />
         </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-4xl font-bold text-white tabular-nums">
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-6xl font-bold text-white tabular-nums leading-none">
             {mins}:{secs.toString().padStart(2, '0')}
           </span>
+          <span className="text-gray-500 text-xs mt-2">seg restantes</span>
         </div>
       </div>
 
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-3 mb-8">
         <button
           onClick={() => adjust(-30)}
-          className="px-4 py-2.5 rounded-xl bg-white/10 text-white text-sm font-medium hover:bg-white/20 active:scale-95 transition"
+          className="px-5 py-3 rounded-xl bg-white/8 text-gray-300 text-sm font-semibold hover:bg-white/15 active:scale-95 transition border border-white/10"
         >
           −30s
         </button>
         <button
           onClick={() => adjust(30)}
-          className="px-4 py-2.5 rounded-xl bg-white/10 text-white text-sm font-medium hover:bg-white/20 active:scale-95 transition"
+          className="px-5 py-3 rounded-xl bg-white/8 text-gray-300 text-sm font-semibold hover:bg-white/15 active:scale-95 transition border border-white/10"
         >
           +30s
         </button>
@@ -118,7 +119,7 @@ export function RestTimer({ seconds, onDone, onSkip }: RestTimerProps) {
 
       <button
         onClick={onSkip}
-        className="px-8 py-3 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-medium active:scale-95 transition"
+        className="w-full max-w-xs py-3.5 rounded-2xl bg-primary-500 hover:bg-primary-600 text-white font-semibold text-base active:scale-95 transition shadow-lg shadow-primary-500/25"
       >
         Saltar descanso →
       </button>

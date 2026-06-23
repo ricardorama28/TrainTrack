@@ -62,13 +62,15 @@ export function RoutineCard({ routine, onStart, onEdit, onDuplicate, onDelete }:
 
       {/* Start workout */}
       {routine.exercises.length > 0 && (
-        <Button size="sm" onClick={onStart} fullWidth>▶ Iniciar entrenamiento</Button>
+        <Button size="lg" onClick={onStart} fullWidth className="mt-1">
+          ▶ Iniciar entrenamiento
+        </Button>
       )}
 
       {/* Actions */}
-      <div className="flex gap-2 pt-1 border-t border-gray-100 dark:border-gray-700">
+      <div className="flex gap-2 border-t border-gray-100 dark:border-gray-800 pt-2">
         <Button variant="ghost" size="sm" onClick={onEdit} className="flex-1">✏️ Editar</Button>
-        <Button variant="ghost" size="sm" onClick={onDuplicate}>📋 Duplicar</Button>
+        <Button variant="ghost" size="sm" onClick={onDuplicate}>📋</Button>
         <Button variant="ghost" size="sm" onClick={onDelete} className="text-red-500 dark:text-red-400">🗑️</Button>
       </div>
     </Card>

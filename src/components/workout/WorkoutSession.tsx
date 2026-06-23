@@ -3,10 +3,11 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { RestTimer } from './RestTimer';
 import { todayStr } from '../../lib/dates';
-import type { Routine, WorkoutLog, FeelingType, MuscleGroup, SetLog, ExerciseLog } from '../../types';
+import type { Routine, WorkoutLog, FeelingType, MuscleGroup, SetLog, ExerciseLog, Exercise } from '../../types';
 
 interface WorkoutSessionProps {
   routine: Routine;
+  exercises?: Exercise[];
   defaultRestSeconds?: number;
   onFinish: (log: Omit<WorkoutLog, 'id'>) => void;
   onCancel: () => void;
@@ -50,8 +51,9 @@ function parseRepsNumber(reps?: string): number | undefined {
   return m ? parseInt(m[0]) : undefined;
 }
 
-function buildSession(routine: Routine): SessionExercise[] {
+function buildSession(routine: Routine, exercises?: Exercise[]): SessionExercise[] {
   return routine.exercises.map(ex => {
+    const libExercise = ex.exerciseId ? exercises?.find(e => e.id === ex.exerciseId) : undefined;
     const count = ex.sets && ex.sets > 0 ? ex.sets : 1;
     const repsNum = parseRepsNumber(ex.reps);
     return {
@@ -61,8 +63,8 @@ function buildSession(routine: Routine): SessionExercise[] {
       targetReps: ex.reps,
       targetWeight: ex.weight,
       restSeconds: ex.restSeconds,
-      notes: ex.notes,
-      videoUrl: ex.videoUrl,
+      notes: ex.notes ?? libExercise?.technicalNotes,
+      videoUrl: ex.videoUrl ?? libExercise?.videoUrl,
       sets: Array.from({ length: count }, () => ({
         weight: ex.weight,
         reps: repsNum,
@@ -79,8 +81,8 @@ function formatElapsed(ms: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-export function WorkoutSession({ routine, defaultRestSeconds = 60, onFinish, onCancel }: WorkoutSessionProps) {
-  const [session, setSession] = useState<SessionExercise[]>(() => buildSession(routine));
+export function WorkoutSession({ routine, exercises, defaultRestSeconds = 60, onFinish, onCancel }: WorkoutSessionProps) {
+  const [session, setSession] = useState<SessionExercise[]>(() => buildSession(routine, exercises));
   const [current, setCurrent] = useState(0);
   const [startedAt] = useState(() => Date.now());
   const [elapsed, setElapsed] = useState(0);
@@ -167,48 +169,48 @@ export function WorkoutSession({ routine, defaultRestSeconds = 60, onFinish, onC
   // ── Finishing screen ─────────────────────────────────────────────────────────
   if (phase === 'finishing') {
     return (
-      <div className="fixed inset-0 z-50 bg-white dark:bg-gray-900 overflow-y-auto">
+      <div className="fixed inset-0 z-50 bg-gray-950 overflow-y-auto">
         <div className="max-w-lg mx-auto p-5 space-y-6">
-          <div className="text-center pt-4">
-            <div className="text-5xl mb-2">🎉</div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">¡Entrenamiento completo!</h2>
-            <p className="text-gray-500 dark:text-gray-400 mt-1">
+          <div className="text-center pt-8">
+            <div className="text-6xl mb-3">🎉</div>
+            <h2 className="text-3xl font-bold text-white">¡Listo!</h2>
+            <p className="text-gray-400 mt-2">
               {routine.name} · {formatElapsed(Date.now() - startedAt)} · {doneSets}/{totalSets} series
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">¿Cómo te sentiste?</label>
+            <label className="block text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">¿Cómo te sentiste?</label>
             <div className="flex gap-2">
               {FEELINGS.map(f => (
                 <button
                   key={f.value}
                   onClick={() => setFeeling(f.value)}
-                  className={`flex-1 flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 transition-all ${
+                  className={`flex-1 flex flex-col items-center gap-1.5 p-3 rounded-2xl border-2 transition-all ${
                     feeling === f.value
-                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                      : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'
+                      ? 'border-primary-500 bg-primary-500/10'
+                      : 'border-gray-700 hover:border-gray-600 bg-gray-800/50'
                   }`}
                 >
-                  <span className="text-xl">{f.icon}</span>
-                  <span className="text-[10px] text-gray-600 dark:text-gray-300 font-medium">{f.label}</span>
+                  <span className="text-2xl">{f.icon}</span>
+                  <span className="text-[10px] text-gray-300 font-semibold">{f.label}</span>
                 </button>
               ))}
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notas</label>
+            <label className="block text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">Notas</label>
             <textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
               rows={3}
               placeholder="Observaciones del entrenamiento..."
-              className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 text-sm resize-none"
+              className="w-full px-3 py-2.5 rounded-xl border border-gray-700 bg-gray-800 text-gray-100 text-sm resize-none placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-3 pb-8">
             <Button variant="secondary" onClick={() => setPhase('active')} className="flex-1">
               ← Volver
             </Button>
@@ -223,33 +225,33 @@ export function WorkoutSession({ routine, defaultRestSeconds = 60, onFinish, onC
 
   // ── Active session ───────────────────────────────────────────────────────────
   return (
-    <div className="fixed inset-0 z-50 bg-gray-50 dark:bg-gray-900 flex flex-col">
+    <div className="fixed inset-0 z-50 bg-gray-950 flex flex-col">
       {/* Header */}
-      <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3">
+      <div className="flex-shrink-0 bg-gray-900 border-b border-gray-800 px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="font-semibold text-gray-900 dark:text-white truncate">{routine.name}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">⏱ {formatElapsed(elapsed)}</p>
+            <p className="font-bold text-white truncate">{routine.name}</p>
+            <p className="text-xs text-gray-500 tabular-nums">⏱ {formatElapsed(elapsed)}</p>
           </div>
           <button
             onClick={() => {
               if (confirm('¿Abandonar el entrenamiento? Se perderá el progreso no guardado.')) onCancel();
             }}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
+            className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-gray-700 text-gray-400 hover:text-white transition"
             aria-label="Abandonar"
           >
             ✕
           </button>
         </div>
         {/* Progress bar */}
-        <div className="mt-2.5">
-          <div className="flex justify-between text-[11px] text-gray-400 dark:text-gray-500 mb-1">
+        <div className="mt-3">
+          <div className="flex justify-between text-[11px] text-gray-500 mb-1.5">
             <span>Ejercicio {current + 1} de {session.length}</span>
-            <span>{doneSets}/{totalSets} series</span>
+            <span className="text-primary-400 font-semibold">{doneSets}/{totalSets} series</span>
           </div>
-          <div className="h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+          <div className="h-1.5 rounded-full bg-gray-800 overflow-hidden">
             <div
-              className="h-full bg-primary-500 transition-all"
+              className="h-full bg-primary-500 rounded-full transition-all duration-500"
               style={{ width: `${progress * 100}%` }}
             />
           </div>
@@ -257,26 +259,37 @@ export function WorkoutSession({ routine, defaultRestSeconds = 60, onFinish, onC
       </div>
 
       {/* Body */}
-      <div className="flex-1 overflow-y-auto px-4 py-4">
+      <div className="flex-1 overflow-y-auto px-4 py-5">
         {ex && (
-          <div className="max-w-lg mx-auto space-y-4">
+          <div className="max-w-lg mx-auto space-y-5">
             {/* Exercise header */}
-            <div>
-              <div className="flex items-center gap-2 flex-wrap mb-1">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">{ex.name}</h2>
-                {ex.muscleGroup && <Badge variant="purple">{MUSCLE_LABELS[ex.muscleGroup]}</Badge>}
+            <div className="space-y-2">
+              <div className="flex items-start gap-3 flex-wrap">
+                <h2 className="text-3xl font-extrabold text-white leading-tight flex-1">{ex.name}</h2>
+                {ex.muscleGroup && (
+                  <Badge variant="purple">{MUSCLE_LABELS[ex.muscleGroup]}</Badge>
+                )}
               </div>
-              <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
-                {ex.targetReps && <span>🎯 {ex.sets.length}×{ex.targetReps}</span>}
-                {ex.targetWeight != null && <span>🏋️ {ex.targetWeight} kg</span>}
+              <div className="flex items-center gap-4 text-sm text-gray-400">
+                {ex.targetReps && (
+                  <span className="font-semibold text-gray-300">🎯 {ex.sets.length}×{ex.targetReps}</span>
+                )}
+                {ex.targetWeight != null && (
+                  <span>🏋️ {ex.targetWeight} kg</span>
+                )}
                 {ex.videoUrl && (
-                  <a href={ex.videoUrl} target="_blank" rel="noopener noreferrer" className="text-primary-600 dark:text-primary-400">
-                    🎬 Video
+                  <a
+                    href={ex.videoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-accent-400 hover:text-accent-300 font-medium transition"
+                  >
+                    🎬 Ver video
                   </a>
                 )}
               </div>
               {ex.notes && (
-                <p className="text-sm text-gray-500 dark:text-gray-400 italic bg-gray-100 dark:bg-gray-800 rounded-lg px-3 py-2 mt-2">
+                <p className="text-sm text-gray-400 italic bg-gray-800/60 rounded-xl px-4 py-2.5 border border-gray-700/50">
                   {ex.notes}
                 </p>
               )}
@@ -284,7 +297,7 @@ export function WorkoutSession({ routine, defaultRestSeconds = 60, onFinish, onC
 
             {/* Sets */}
             <div className="space-y-2">
-              <div className="grid grid-cols-[2rem_1fr_1fr_2.5rem] gap-2 px-1 text-[11px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+              <div className="grid grid-cols-[2rem_1fr_1fr_2.5rem] gap-2 px-1 text-[11px] font-bold text-gray-500 uppercase tracking-widest">
                 <span>Set</span>
                 <span>Peso (kg)</span>
                 <span>Reps</span>
@@ -293,13 +306,13 @@ export function WorkoutSession({ routine, defaultRestSeconds = 60, onFinish, onC
               {ex.sets.map((set, i) => (
                 <div
                   key={i}
-                  className={`grid grid-cols-[2rem_1fr_1fr_2.5rem] gap-2 items-center rounded-xl p-2 border-2 transition-colors ${
+                  className={`grid grid-cols-[2rem_1fr_1fr_2.5rem] gap-2 items-center rounded-2xl p-2.5 border-2 transition-all ${
                     set.completed
-                      ? 'border-green-400 bg-green-50 dark:bg-green-900/20'
-                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
+                      ? 'border-primary-500/60 bg-primary-500/8'
+                      : 'border-gray-700 bg-gray-800/50'
                   }`}
                 >
-                  <span className="text-center text-sm font-semibold text-gray-600 dark:text-gray-300">{i + 1}</span>
+                  <span className={`text-center text-sm font-bold ${set.completed ? 'text-primary-400' : 'text-gray-400'}`}>{i + 1}</span>
                   <input
                     type="number"
                     step="0.5"
@@ -307,7 +320,7 @@ export function WorkoutSession({ routine, defaultRestSeconds = 60, onFinish, onC
                     value={set.weight ?? ''}
                     onChange={e => updateSet(current, i, { weight: e.target.value ? Number(e.target.value) : undefined })}
                     placeholder="—"
-                    className="w-full px-2 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 text-sm text-center"
+                    className="w-full px-2 py-2 rounded-xl border border-gray-700 bg-gray-900 text-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder:text-gray-600"
                   />
                   <input
                     type="number"
@@ -315,15 +328,15 @@ export function WorkoutSession({ routine, defaultRestSeconds = 60, onFinish, onC
                     value={set.reps ?? ''}
                     onChange={e => updateSet(current, i, { reps: e.target.value ? Number(e.target.value) : undefined })}
                     placeholder="—"
-                    className="w-full px-2 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 text-sm text-center"
+                    className="w-full px-2 py-2 rounded-xl border border-gray-700 bg-gray-900 text-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder:text-gray-600"
                   />
-                  <div className="flex items-center justify-center gap-1">
+                  <div className="flex items-center justify-center">
                     <button
                       onClick={() => toggleSet(i)}
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold transition active:scale-90 ${
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold transition active:scale-90 ${
                         set.completed
-                          ? 'bg-green-500 text-white'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                          ? 'bg-primary-500 text-white shadow-md shadow-primary-500/30'
+                          : 'bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-white'
                       }`}
                       title={set.completed ? 'Marcar como pendiente' : 'Completar serie'}
                     >
@@ -336,14 +349,14 @@ export function WorkoutSession({ routine, defaultRestSeconds = 60, onFinish, onC
               <div className="flex gap-2 pt-1">
                 <button
                   onClick={addSet}
-                  className="flex-1 py-2 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  className="flex-1 py-2.5 rounded-xl border border-dashed border-gray-700 text-sm text-gray-500 hover:text-gray-300 hover:border-gray-600 transition"
                 >
                   + Agregar serie
                 </button>
                 {ex.sets.length > 1 && (
                   <button
                     onClick={() => removeSet(ex.sets.length - 1)}
-                    className="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    className="px-4 py-2.5 rounded-xl border border-gray-700 text-sm text-gray-500 hover:text-gray-300 hover:bg-gray-800 transition"
                   >
                     − Quitar
                   </button>
@@ -354,7 +367,7 @@ export function WorkoutSession({ routine, defaultRestSeconds = 60, onFinish, onC
             {/* Rest timer launcher */}
             <button
               onClick={() => setResting(ex.restSeconds ?? defaultRestSeconds)}
-              className="w-full py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700"
+              className="w-full py-3 rounded-2xl bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm font-semibold border border-gray-700 hover:border-gray-600 transition"
             >
               ⏱ Iniciar descanso ({ex.restSeconds ?? defaultRestSeconds}s)
             </button>
@@ -363,7 +376,7 @@ export function WorkoutSession({ routine, defaultRestSeconds = 60, onFinish, onC
       </div>
 
       {/* Footer nav */}
-      <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 px-4 py-3">
+      <div className="flex-shrink-0 bg-gray-900 border-t border-gray-800 px-4 py-3">
         <div className="max-w-lg mx-auto flex gap-2">
           <Button
             variant="secondary"
@@ -373,7 +386,7 @@ export function WorkoutSession({ routine, defaultRestSeconds = 60, onFinish, onC
             ←
           </Button>
           {current < session.length - 1 ? (
-            <Button onClick={() => setCurrent(c => c + 1)} fullWidth>
+            <Button variant="accent" onClick={() => setCurrent(c => c + 1)} fullWidth>
               Siguiente ejercicio →
             </Button>
           ) : (
@@ -382,8 +395,8 @@ export function WorkoutSession({ routine, defaultRestSeconds = 60, onFinish, onC
             </Button>
           )}
           {current < session.length - 1 && (
-            <Button variant="ghost" onClick={() => setPhase('finishing')} className="text-gray-500">
-              Finalizar
+            <Button variant="ghost" onClick={() => setPhase('finishing')} className="text-gray-500 text-xs">
+              Fin
             </Button>
           )}
         </div>

@@ -16,7 +16,7 @@ export const defaultSettings: Settings = {
   weeklyGoal: 4,
   restDays: [0, 6],       // Sunday and Saturday
   restDaysKeepStreak: true,
-  darkMode: false,
+  darkMode: true,
 };
 
 // ─── Generic Helpers ─────────────────────────────────────────────────────────

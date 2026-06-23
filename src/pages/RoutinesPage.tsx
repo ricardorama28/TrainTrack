@@ -22,6 +22,7 @@ function categoryFromMuscle(mg?: MuscleGroup): ExerciseCategory {
 
 interface RoutinesPageProps {
   routines: Routine[];
+  exercises: Exercise[];
   onAdd: (routine: Omit<Routine, 'id' | 'createdAt'>) => void;
   onUpdate: (id: string, updates: Partial<Omit<Routine, 'id' | 'createdAt'>>) => void;
   onDelete: (id: string) => void;
@@ -30,7 +31,7 @@ interface RoutinesPageProps {
   onSaveLog: (log: Omit<WorkoutLog, 'id'>) => void;
 }
 
-export function RoutinesPage({ routines, onAdd, onUpdate, onDelete, onDuplicate, getOrCreateExercise, onSaveLog }: RoutinesPageProps) {
+export function RoutinesPage({ routines, exercises, onAdd, onUpdate, onDelete, onDuplicate, getOrCreateExercise, onSaveLog }: RoutinesPageProps) {
   const [formOpen, setFormOpen] = useState(false);
   const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
   const [importOpen, setImportOpen] = useState(false);
@@ -127,6 +128,7 @@ export function RoutinesPage({ routines, onAdd, onUpdate, onDelete, onDuplicate,
       )}
 
       <RoutineForm
+        key={editingRoutine?.id ?? 'new'}
         open={formOpen}
         routine={editingRoutine ?? undefined}
         onClose={() => { setFormOpen(false); setEditingRoutine(null); }}
@@ -142,6 +144,7 @@ export function RoutinesPage({ routines, onAdd, onUpdate, onDelete, onDuplicate,
       {activeRoutine && (
         <WorkoutSession
           routine={activeRoutine}
+          exercises={exercises}
           onCancel={() => setActiveRoutine(null)}
           onFinish={(log) => { onSaveLog(log); setActiveRoutine(null); }}
         />

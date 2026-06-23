@@ -138,6 +138,7 @@ export function RoutineForm({ open, routine, onClose, onSave }: RoutineFormProps
       </Modal>
 
       <ExerciseForm
+        key={editingExercise?.id ?? 'new'}
         open={exerciseFormOpen}
         exercise={editingExercise ?? undefined}
         onClose={() => { setExerciseFormOpen(false); setEditingExercise(null); }}

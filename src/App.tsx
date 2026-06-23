@@ -75,6 +75,7 @@ export default function App() {
               element={
                 <RoutinesPage
                   routines={routines}
+                  exercises={exercises}
                   onAdd={addRoutine}
                   onUpdate={updateRoutine}
                   onDelete={deleteRoutine}
