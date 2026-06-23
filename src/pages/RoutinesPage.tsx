@@ -1,0 +1,120 @@
+import { useState } from 'react';
+import { Button } from '../components/ui/Button';
+import { EmptyState } from '../components/ui/EmptyState';
+import { RoutineCard } from '../components/routines/RoutineCard';
+import { RoutineForm } from '../components/routines/RoutineForm';
+import { ImportRoutine } from '../components/routines/ImportRoutine';
+import type { Routine, ParsedDay, ExerciseTemplate } from '../types';
+
+function newId(): string {
+  return typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+interface RoutinesPageProps {
+  routines: Routine[];
+  onAdd: (routine: Omit<Routine, 'id' | 'createdAt'>) => void;
+  onUpdate: (id: string, updates: Partial<Omit<Routine, 'id' | 'createdAt'>>) => void;
+  onDelete: (id: string) => void;
+  onDuplicate: (id: string) => void;
+}
+
+export function RoutinesPage({ routines, onAdd, onUpdate, onDelete, onDuplicate }: RoutinesPageProps) {
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+
+  function handleSaveRoutine(data: Omit<Routine, 'id' | 'createdAt'>) {
+    if (editingRoutine) {
+      onUpdate(editingRoutine.id, data);
+    } else {
+      onAdd(data);
+    }
+    setEditingRoutine(null);
+  }
+
+  function handleImport(days: ParsedDay[]) {
+    for (const day of days) {
+      const exercises: ExerciseTemplate[] = day.exercises.map(ex => ({
+        id: newId(),
+        name: ex.name,
+        sets: ex.sets,
+        reps: ex.reps,
+        weight: ex.weight,
+        restSeconds: ex.restSeconds,
+        videoUrl: ex.videoUrl,
+        muscleGroup: ex.muscleGroup,
+        notes: ex.notes,
+      }));
+
+      onAdd({
+        name: day.name,
+        description: day.notes || undefined,
+        type: day.type,
+        exercises,
+      });
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Rutinas</h1>
+        <div className="flex gap-2">
+          <Button variant="secondary" size="sm" onClick={() => setImportOpen(true)}>
+            📥 Importar
+          </Button>
+          <Button size="sm" onClick={() => { setEditingRoutine(null); setFormOpen(true); }}>
+            + Nueva
+          </Button>
+        </div>
+      </div>
+
+      {routines.length === 0 ? (
+        <EmptyState
+          icon="📋"
+          title="No hay rutinas todavía"
+          description="Creá tu primera rutina o importá una desde texto."
+          action={
+            <div className="flex gap-3">
+              <Button variant="secondary" onClick={() => setImportOpen(true)}>
+                📥 Importar rutina
+              </Button>
+              <Button onClick={() => { setEditingRoutine(null); setFormOpen(true); }}>
+                + Crear rutina
+              </Button>
+            </div>
+          }
+        />
+      ) : (
+        <div className="space-y-3">
+          {routines.map(routine => (
+            <RoutineCard
+              key={routine.id}
+              routine={routine}
+              onEdit={() => { setEditingRoutine(routine); setFormOpen(true); }}
+              onDuplicate={() => onDuplicate(routine.id)}
+              onDelete={() => {
+                if (confirm(`¿Eliminar la rutina "${routine.name}"?`)) onDelete(routine.id);
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      <RoutineForm
+        open={formOpen}
+        routine={editingRoutine ?? undefined}
+        onClose={() => { setFormOpen(false); setEditingRoutine(null); }}
+        onSave={handleSaveRoutine}
+      />
+
+      <ImportRoutine
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImport={handleImport}
+      />
+    </div>
+  );
+}
