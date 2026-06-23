@@ -1,7 +1,54 @@
-import type { Routine } from '../types';
+import type { Routine, Exercise, ExerciseCategory, MuscleGroup } from '../types';
 
 function id(n: number): string {
   return `sample_${n}`;
+}
+
+/** Maps a muscle group to a sensible default exercise category */
+function categoryFromMuscle(mg?: MuscleGroup): ExerciseCategory {
+  if (mg === 'mobility') return 'mobility';
+  if (mg === 'core') return 'core';
+  return 'strength';
+}
+
+function normalize(name: string): string {
+  return name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Builds the initial data set: a global exercise library derived from the
+ * sample routines, plus the routines themselves linked to that library via
+ * exerciseId. Used to seed localStorage on first run.
+ */
+export function buildSampleData(): { routines: Routine[]; exercises: Exercise[] } {
+  const exerciseMap = new Map<string, Exercise>();
+  const now = new Date().toISOString();
+  let counter = 0;
+
+  // Deep-clone routines so we can attach exerciseId without mutating the source
+  const routines: Routine[] = sampleRoutines.map(r => ({
+    ...r,
+    exercises: r.exercises.map(ex => {
+      const key = normalize(ex.name);
+      let lib = exerciseMap.get(key);
+      if (!lib) {
+        lib = {
+          id: `sample_ex_${counter++}`,
+          name: ex.name,
+          nameLower: key,
+          muscleGroup: ex.muscleGroup,
+          videoUrl: ex.videoUrl,
+          technicalNotes: ex.notes,
+          category: categoryFromMuscle(ex.muscleGroup),
+          createdAt: now,
+        };
+        exerciseMap.set(key, lib);
+      }
+      return { ...ex, exerciseId: lib.id };
+    }),
+  }));
+
+  return { routines, exercises: Array.from(exerciseMap.values()) };
 }
 
 export const sampleRoutines: Routine[] = [

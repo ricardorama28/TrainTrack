@@ -8,21 +8,26 @@ import { ExercisesPage } from './pages/ExercisesPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { useWorkouts } from './hooks/useWorkouts';
 import { useRoutines } from './hooks/useRoutines';
+import { useExercises } from './hooks/useExercises';
 import { useSettings } from './hooks/useSettings';
 import { storage } from './lib/storage';
-import { sampleRoutines } from './lib/sampleData';
+import { buildSampleData } from './lib/sampleData';
 
 export default function App() {
   const { logs, addOrUpdateLog, deleteLog, refresh: refreshLogs } = useWorkouts();
   const { routines, addRoutine, updateRoutine, deleteRoutine, duplicateRoutine, refresh: refreshRoutines } = useRoutines();
+  const { exercises, getOrCreate, updateExercise, refresh: refreshExercises } = useExercises();
   const { settings, updateSettings, refresh: refreshSettings } = useSettings();
 
-  // Load sample data on first run
+  // Load sample data on first run (routines + derived exercise library)
   useEffect(() => {
     if (!storage.isInitialized()) {
+      const { routines: sampleRoutines, exercises: sampleExercises } = buildSampleData();
       storage.setRoutines(sampleRoutines);
+      storage.setExercises(sampleExercises);
       storage.markInitialized();
       refreshRoutines();
+      refreshExercises();
     }
   }, []);
 
@@ -35,8 +40,9 @@ export default function App() {
   const handleDataChange = useCallback(() => {
     refreshLogs();
     refreshRoutines();
+    refreshExercises();
     refreshSettings();
-  }, [refreshLogs, refreshRoutines, refreshSettings]);
+  }, [refreshLogs, refreshRoutines, refreshExercises, refreshSettings]);
 
   return (
     <BrowserRouter>
@@ -73,6 +79,7 @@ export default function App() {
                   onUpdate={updateRoutine}
                   onDelete={deleteRoutine}
                   onDuplicate={duplicateRoutine}
+                  getOrCreateExercise={getOrCreate}
                 />
               }
             />
@@ -82,6 +89,8 @@ export default function App() {
                 <ExercisesPage
                   logs={logs}
                   routines={routines}
+                  exercises={exercises}
+                  onUpdateExercise={updateExercise}
                 />
               }
             />

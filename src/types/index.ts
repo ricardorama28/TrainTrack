@@ -16,10 +16,33 @@ export type MuscleGroup =
   | 'mobility'
   | 'other';
 
+// ─── Exercise (global library) ───────────────────────────────────────────────
+
+/** Type of exercise, used for filtering and categorisation in the library */
+export type ExerciseCategory = 'strength' | 'mobility' | 'core' | 'posture' | 'cardio';
+
+/**
+ * A reusable exercise stored in the global library.
+ * Routines reference these by id via ExerciseTemplate.exerciseId.
+ */
+export interface Exercise {
+  id: string;
+  name: string;
+  nameLower: string;              // normalised name for search & dedup
+  muscleGroup?: MuscleGroup;
+  secondaryMuscles?: MuscleGroup[];
+  equipment?: string[];
+  videoUrl?: string;
+  technicalNotes?: string;
+  category?: ExerciseCategory;
+  createdAt: string;
+}
+
 // ─── Exercise Template (inside a Routine) ────────────────────────────────────
 
 export interface ExerciseTemplate {
   id: string;
+  exerciseId?: string;    // NEW: reference to Exercise in the global library
   name: string;
   sets?: number;
   reps?: string;          // "10", "30 segundos", "al fallo"
@@ -85,6 +108,7 @@ export interface Settings {
 export interface AppData {
   workoutLogs: WorkoutLog[];
   routines: Routine[];
+  exercises: Exercise[];   // NEW: global exercise library
   settings: Settings;
   version: string;
 }

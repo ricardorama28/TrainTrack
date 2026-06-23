@@ -4,12 +4,19 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { RoutineCard } from '../components/routines/RoutineCard';
 import { RoutineForm } from '../components/routines/RoutineForm';
 import { ImportRoutine } from '../components/routines/ImportRoutine';
-import type { Routine, ParsedDay, ExerciseTemplate } from '../types';
+import type { Routine, ParsedDay, ExerciseTemplate, Exercise, ExerciseCategory, MuscleGroup } from '../types';
 
 function newId(): string {
   return typeof crypto !== 'undefined' && crypto.randomUUID
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+/** Derive a default category from a muscle group for newly created exercises */
+function categoryFromMuscle(mg?: MuscleGroup): ExerciseCategory {
+  if (mg === 'mobility') return 'mobility';
+  if (mg === 'core') return 'core';
+  return 'strength';
 }
 
 interface RoutinesPageProps {
@@ -18,9 +25,10 @@ interface RoutinesPageProps {
   onUpdate: (id: string, updates: Partial<Omit<Routine, 'id' | 'createdAt'>>) => void;
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
+  getOrCreateExercise: (name: string, defaults?: Partial<Omit<Exercise, 'id' | 'createdAt' | 'nameLower' | 'name'>>) => Exercise;
 }
 
-export function RoutinesPage({ routines, onAdd, onUpdate, onDelete, onDuplicate }: RoutinesPageProps) {
+export function RoutinesPage({ routines, onAdd, onUpdate, onDelete, onDuplicate, getOrCreateExercise }: RoutinesPageProps) {
   const [formOpen, setFormOpen] = useState(false);
   const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
   const [importOpen, setImportOpen] = useState(false);
@@ -36,17 +44,28 @@ export function RoutinesPage({ routines, onAdd, onUpdate, onDelete, onDuplicate 
 
   function handleImport(days: ParsedDay[]) {
     for (const day of days) {
-      const exercises: ExerciseTemplate[] = day.exercises.map(ex => ({
-        id: newId(),
-        name: ex.name,
-        sets: ex.sets,
-        reps: ex.reps,
-        weight: ex.weight,
-        restSeconds: ex.restSeconds,
-        videoUrl: ex.videoUrl,
-        muscleGroup: ex.muscleGroup,
-        notes: ex.notes,
-      }));
+      const exercises: ExerciseTemplate[] = day.exercises.map(ex => {
+        // Create or reuse the exercise in the global library, then link by id
+        const libExercise = getOrCreateExercise(ex.name, {
+          muscleGroup: ex.muscleGroup,
+          videoUrl: ex.videoUrl,
+          technicalNotes: ex.notes,
+          category: categoryFromMuscle(ex.muscleGroup),
+        });
+
+        return {
+          id: newId(),
+          exerciseId: libExercise.id,
+          name: ex.name,
+          sets: ex.sets,
+          reps: ex.reps,
+          weight: ex.weight,
+          restSeconds: ex.restSeconds,
+          videoUrl: ex.videoUrl ?? libExercise.videoUrl,
+          muscleGroup: ex.muscleGroup ?? libExercise.muscleGroup,
+          notes: ex.notes,
+        };
+      });
 
       onAdd({
         name: day.name,
