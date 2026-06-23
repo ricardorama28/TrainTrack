@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { storage } from '../lib/storage';
+import { enrichExerciseFromKnowledgeBase } from '../lib/enrichExercise';
 import type { Exercise } from '../types';
 
 function newId(): string {
@@ -37,14 +38,18 @@ export function useExercises() {
     return storage.getExercises().find(e => e.nameLower === key);
   }, []);
 
-  const addExercise = useCallback((data: Omit<Exercise, 'id' | 'createdAt' | 'nameLower'>): Exercise => {
+  const addExercise = useCallback((
+    data: Omit<Exercise, 'id' | 'createdAt' | 'nameLower'>,
+    options?: { enrich?: boolean },
+  ): Exercise => {
     const current = storage.getExercises();
-    const exercise: Exercise = {
+    let exercise: Exercise = {
       ...data,
       id: newId(),
       nameLower: normalizeName(data.name),
       createdAt: new Date().toISOString(),
     };
+    if (options?.enrich !== false) exercise = enrichExerciseFromKnowledgeBase(exercise);
     save([...current, exercise]);
     return exercise;
   }, [save]);
@@ -72,21 +77,40 @@ export function useExercises() {
   const getOrCreate = useCallback((
     name: string,
     defaults?: Partial<Omit<Exercise, 'id' | 'createdAt' | 'nameLower' | 'name'>>,
+    options?: { enrich?: boolean },
   ): Exercise => {
     const key = normalizeName(name);
     const current = storage.getExercises();
     const existing = current.find(e => e.nameLower === key);
     if (existing) return existing;
 
-    const exercise: Exercise = {
+    let exercise: Exercise = {
       id: newId(),
       name: name.trim(),
       nameLower: key,
       createdAt: new Date().toISOString(),
       ...defaults,
     };
+    if (options?.enrich !== false) exercise = enrichExerciseFromKnowledgeBase(exercise);
     save([...current, exercise]);
     return exercise;
+  }, [save]);
+
+  /**
+   * Re-enriches every stored exercise from the local knowledge base, filling
+   * empty fields only and preserving manual references. Returns how many
+   * exercises changed.
+   */
+  const enrichExisting = useCallback((): number => {
+    const current = storage.getExercises();
+    let changed = 0;
+    const updated = current.map(e => {
+      const next = enrichExerciseFromKnowledgeBase(e);
+      if (next !== e) changed++;
+      return next;
+    });
+    if (changed > 0) save(updated);
+    return changed;
   }, [save]);
 
   const refresh = useCallback(() => {
@@ -100,6 +124,7 @@ export function useExercises() {
     updateExercise,
     deleteExercise,
     getOrCreate,
+    enrichExisting,
     refresh,
   };
 }

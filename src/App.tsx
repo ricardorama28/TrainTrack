@@ -12,11 +12,12 @@ import { useExercises } from './hooks/useExercises';
 import { useSettings } from './hooks/useSettings';
 import { storage } from './lib/storage';
 import { buildSampleData } from './lib/sampleData';
+import { enrichExerciseFromKnowledgeBase } from './lib/enrichExercise';
 
 export default function App() {
   const { logs, addOrUpdateLog, deleteLog, refresh: refreshLogs } = useWorkouts();
   const { routines, addRoutine, updateRoutine, deleteRoutine, duplicateRoutine, refresh: refreshRoutines } = useRoutines();
-  const { exercises, getOrCreate, updateExercise, refresh: refreshExercises } = useExercises();
+  const { exercises, getOrCreate, updateExercise, enrichExisting, refresh: refreshExercises } = useExercises();
   const { settings, updateSettings, refresh: refreshSettings } = useSettings();
 
   // Load sample data on first run (routines + derived exercise library)
@@ -24,7 +25,8 @@ export default function App() {
     if (!storage.isInitialized()) {
       const { routines: sampleRoutines, exercises: sampleExercises } = buildSampleData();
       storage.setRoutines(sampleRoutines);
-      storage.setExercises(sampleExercises);
+      // Enrich sample library from the local knowledge base on first run.
+      storage.setExercises(sampleExercises.map(enrichExerciseFromKnowledgeBase));
       storage.markInitialized();
       refreshRoutines();
       refreshExercises();
@@ -82,6 +84,7 @@ export default function App() {
                   onDuplicate={duplicateRoutine}
                   getOrCreateExercise={getOrCreate}
                   onSaveLog={addOrUpdateLog}
+                  autoEnrich={settings.autoEnrich}
                 />
               }
             />
@@ -103,6 +106,7 @@ export default function App() {
                   settings={settings}
                   onUpdate={updateSettings}
                   onDataChange={handleDataChange}
+                  onEnrichExisting={enrichExisting}
                 />
               }
             />

@@ -27,8 +27,15 @@ interface SessionExercise {
   targetWeight?: number;
   restSeconds?: number;
   notes?: string;
-  videoUrl?: string;
+  description?: string;
+  primaryMuscles?: string[];
+  referenceUrl?: string;
   sets: SessionSet[];
+}
+
+/** YouTube search deep-link fallback when no reference is available. */
+function ytSearchUrl(name: string): string {
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(name + ' ejercicio técnica')}`;
 }
 
 const MUSCLE_LABELS: Record<MuscleGroup, string> = {
@@ -59,12 +66,14 @@ function buildSession(routine: Routine, exercises?: Exercise[]): SessionExercise
     return {
       exerciseId: ex.exerciseId,
       name: ex.name,
-      muscleGroup: ex.muscleGroup,
+      muscleGroup: ex.muscleGroup ?? libExercise?.muscleGroup,
       targetReps: ex.reps,
       targetWeight: ex.weight,
       restSeconds: ex.restSeconds,
       notes: ex.notes ?? libExercise?.technicalNotes,
-      videoUrl: ex.videoUrl ?? libExercise?.videoUrl,
+      description: libExercise?.description,
+      primaryMuscles: libExercise?.primaryMuscles,
+      referenceUrl: ex.videoUrl ?? libExercise?.referenceUrl ?? libExercise?.videoUrl,
       sets: Array.from({ length: count }, () => ({
         weight: ex.weight,
         reps: repsNum,
@@ -270,27 +279,44 @@ export function WorkoutSession({ routine, exercises, defaultRestSeconds = 60, on
                   <Badge variant="purple">{MUSCLE_LABELS[ex.muscleGroup]}</Badge>
                 )}
               </div>
-              <div className="flex items-center gap-4 text-sm text-gray-400">
+              <div className="flex items-center gap-4 text-sm text-gray-400 flex-wrap">
                 {ex.targetReps && (
                   <span className="font-semibold text-gray-300">🎯 {ex.sets.length}×{ex.targetReps}</span>
                 )}
                 {ex.targetWeight != null && (
                   <span>🏋️ {ex.targetWeight} kg</span>
                 )}
-                {ex.videoUrl && (
+                {ex.referenceUrl ? (
                   <a
-                    href={ex.videoUrl}
+                    href={ex.referenceUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1 text-accent-400 hover:text-accent-300 font-medium transition"
                   >
-                    🎬 Ver video
+                    🎬 Ver referencia
+                  </a>
+                ) : (
+                  <a
+                    href={ytSearchUrl(ex.name)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-gray-400 hover:text-gray-200 font-medium transition"
+                  >
+                    🔎 Buscar en YouTube
                   </a>
                 )}
               </div>
+              {ex.primaryMuscles && ex.primaryMuscles.length > 0 && (
+                <p className="text-xs text-gray-500">💪 {ex.primaryMuscles.join(' · ')}</p>
+              )}
+              {ex.description && (
+                <p className="text-sm text-gray-300 bg-gray-800/60 rounded-xl px-4 py-2.5 border border-gray-700/50">
+                  {ex.description}
+                </p>
+              )}
               {ex.notes && (
-                <p className="text-sm text-gray-400 italic bg-gray-800/60 rounded-xl px-4 py-2.5 border border-gray-700/50">
-                  {ex.notes}
+                <p className="text-sm text-gray-400 italic">
+                  📝 {ex.notes}
                 </p>
               )}
             </div>

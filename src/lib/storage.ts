@@ -17,6 +17,8 @@ export const defaultSettings: Settings = {
   restDays: [0, 6],       // Sunday and Saturday
   restDaysKeepStreak: true,
   darkMode: true,
+  autoEnrich: true,       // enrich from local KB by default (no network needed)
+  externalSearch: false,  // external search is opt-in (requires backend)
 };
 
 // ─── Generic Helpers ─────────────────────────────────────────────────────────

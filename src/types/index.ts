@@ -21,21 +21,51 @@ export type MuscleGroup =
 /** Type of exercise, used for filtering and categorisation in the library */
 export type ExerciseCategory = 'strength' | 'mobility' | 'core' | 'posture' | 'cardio';
 
+/** Kind of the reference link attached to an exercise */
+export type ReferenceType = 'youtube' | 'youtube_short' | 'image' | 'web' | 'other';
+
+/** Where the reference came from */
+export type ReferenceSource = 'local' | 'youtube_api' | 'web_search' | 'manual';
+
+/** Lifecycle of a reference: suggested (needs user OK), accepted, manual, or absent */
+export type ReferenceStatus = 'suggested' | 'accepted' | 'manual' | 'missing';
+
 /**
  * A reusable exercise stored in the global library.
  * Routines reference these by id via ExerciseTemplate.exerciseId.
+ *
+ * All descriptive fields are optional and back-filled from the local knowledge
+ * base (see src/data/exerciseKnowledgeBase.ts) without ever overwriting data
+ * the user entered manually.
  */
 export interface Exercise {
   id: string;
   name: string;
   nameLower: string;              // normalised name for search & dedup
-  muscleGroup?: MuscleGroup;
-  secondaryMuscles?: MuscleGroup[];
+  aliases?: string[];            // alternative names for KB matching
+  muscleGroup?: MuscleGroup;     // coarse enum — drives badges & filters
+  primaryMuscles?: string[];     // descriptive, e.g. "Glúteo mayor"
+  secondaryMuscles?: string[];   // descriptive, e.g. "Isquiotibiales"
   equipment?: string[];
-  videoUrl?: string;
-  technicalNotes?: string;
   category?: ExerciseCategory;
+
+  // Knowledge / coaching content
+  description?: string;
+  purpose?: string;
+  simpleInstructions?: string[];
+  commonMistakes?: string[];
+  safetyNotes?: string;
+  technicalNotes?: string;       // free user notes (legacy)
+
+  // Visual reference
+  referenceUrl?: string;         // canonical reference link
+  referenceType?: ReferenceType;
+  referenceSource?: ReferenceSource;
+  referenceStatus?: ReferenceStatus;
+  videoUrl?: string;             // legacy field, kept for back-compat / export
+
   createdAt: string;
+  updatedAt?: string;
 }
 
 // ─── Exercise Template (inside a Routine) ────────────────────────────────────
@@ -101,6 +131,8 @@ export interface Settings {
   restDays: number[];          // days that are planned rest (0-6)
   restDaysKeepStreak: boolean; // whether rest days count toward streak
   darkMode: boolean;
+  autoEnrich: boolean;         // auto-fill exercise data from local knowledge base
+  externalSearch: boolean;     // allow external (serverless) reference search
 }
 
 // ─── App Data (for import/export) ────────────────────────────────────────────

@@ -27,11 +27,12 @@ interface RoutinesPageProps {
   onUpdate: (id: string, updates: Partial<Omit<Routine, 'id' | 'createdAt'>>) => void;
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
-  getOrCreateExercise: (name: string, defaults?: Partial<Omit<Exercise, 'id' | 'createdAt' | 'nameLower' | 'name'>>) => Exercise;
+  getOrCreateExercise: (name: string, defaults?: Partial<Omit<Exercise, 'id' | 'createdAt' | 'nameLower' | 'name'>>, options?: { enrich?: boolean }) => Exercise;
   onSaveLog: (log: Omit<WorkoutLog, 'id'>) => void;
+  autoEnrich: boolean;
 }
 
-export function RoutinesPage({ routines, exercises, onAdd, onUpdate, onDelete, onDuplicate, getOrCreateExercise, onSaveLog }: RoutinesPageProps) {
+export function RoutinesPage({ routines, exercises, onAdd, onUpdate, onDelete, onDuplicate, getOrCreateExercise, onSaveLog, autoEnrich }: RoutinesPageProps) {
   const [formOpen, setFormOpen] = useState(false);
   const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
   const [importOpen, setImportOpen] = useState(false);
@@ -55,7 +56,7 @@ export function RoutinesPage({ routines, exercises, onAdd, onUpdate, onDelete, o
           videoUrl: ex.videoUrl,
           technicalNotes: ex.notes,
           category: categoryFromMuscle(ex.muscleGroup),
-        });
+        }, { enrich: autoEnrich });
 
         return {
           id: newId(),
@@ -65,7 +66,7 @@ export function RoutinesPage({ routines, exercises, onAdd, onUpdate, onDelete, o
           reps: ex.reps,
           weight: ex.weight,
           restSeconds: ex.restSeconds,
-          videoUrl: ex.videoUrl ?? libExercise.videoUrl,
+          videoUrl: ex.videoUrl ?? libExercise.referenceUrl ?? libExercise.videoUrl,
           muscleGroup: ex.muscleGroup ?? libExercise.muscleGroup,
           notes: ex.notes,
         };

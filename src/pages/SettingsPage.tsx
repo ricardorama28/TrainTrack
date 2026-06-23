@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { DataManagement } from '../components/settings/DataManagement';
@@ -7,11 +8,40 @@ interface SettingsPageProps {
   settings: Settings;
   onUpdate: (updates: Partial<Settings>) => void;
   onDataChange: () => void;
+  onEnrichExisting: () => number;
 }
 
 const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
-export function SettingsPage({ settings, onUpdate, onDataChange }: SettingsPageProps) {
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div
+      onClick={() => onChange(!checked)}
+      className={`w-11 h-6 rounded-full transition-colors cursor-pointer flex-shrink-0 ${
+        checked ? 'bg-primary-500' : 'bg-gray-300 dark:bg-gray-600'
+      }`}
+    >
+      <div className={`w-5 h-5 bg-white rounded-full shadow mt-0.5 transition-transform ${
+        checked ? 'translate-x-5 ml-0.5' : 'translate-x-0.5'
+      }`} />
+    </div>
+  );
+}
+
+export function SettingsPage({ settings, onUpdate, onDataChange, onEnrichExisting }: SettingsPageProps) {
+  const [enrichMsg, setEnrichMsg] = useState<string | null>(null);
+
+  function handleEnrich() {
+    const n = onEnrichExisting();
+    setEnrichMsg(
+      n === 0
+        ? 'Todos los ejercicios ya estaban completos.'
+        : `${n} ejercicio${n !== 1 ? 's' : ''} enriquecido${n !== 1 ? 's' : ''} desde la base local.`,
+    );
+    onDataChange();
+    setTimeout(() => setEnrichMsg(null), 4000);
+  }
+
   function toggleRestDay(day: number) {
     const current = settings.restDays;
     const updated = current.includes(day)
@@ -126,6 +156,45 @@ export function SettingsPage({ settings, onUpdate, onDataChange }: SettingsPageP
             }`} />
           </div>
         </label>
+      </Card>
+
+      {/* Exercise references */}
+      <Card>
+        <h2 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">Referencias de ejercicios</h2>
+
+        <div className="space-y-4">
+          <label className="flex items-center justify-between gap-3 cursor-pointer">
+            <div>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Enriquecimiento automático</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Al crear o importar, completa descripción, músculos, instrucciones y referencia desde la base local.
+              </p>
+            </div>
+            <Toggle checked={settings.autoEnrich} onChange={v => onUpdate({ autoEnrich: v })} />
+          </label>
+
+          <label className="flex items-center justify-between gap-3 cursor-not-allowed opacity-60">
+            <div>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Búsqueda externa automática</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Requiere un backend/serverless con API key (no configurado). Sin esto, la app usa la base local y la búsqueda manual.
+              </p>
+            </div>
+            <Toggle checked={settings.externalSearch} onChange={() => { /* gated until backend exists */ }} />
+          </label>
+
+          <div className="border-t border-gray-100 dark:border-gray-700 pt-3 space-y-2">
+            <Button variant="secondary" fullWidth onClick={handleEnrich}>
+              ✨ Enriquecer ejercicios existentes
+            </Button>
+            {enrichMsg && (
+              <p className="text-xs text-center text-primary-600 dark:text-primary-400">{enrichMsg}</p>
+            )}
+            <p className="text-xs text-gray-400 dark:text-gray-500">
+              Completa los ejercicios ya guardados con datos de la base local. Nunca pisa links ni datos que cargaste a mano.
+            </p>
+          </div>
+        </div>
       </Card>
 
       {/* Data management */}
