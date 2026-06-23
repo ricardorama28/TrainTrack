@@ -5,6 +5,7 @@ import type { Routine } from '../../types';
 
 interface RoutineCardProps {
   routine: Routine;
+  onStart: () => void;
   onEdit: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
@@ -12,7 +13,7 @@ interface RoutineCardProps {
 
 const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
-export function RoutineCard({ routine, onEdit, onDuplicate, onDelete }: RoutineCardProps) {
+export function RoutineCard({ routine, onStart, onEdit, onDuplicate, onDelete }: RoutineCardProps) {
   return (
     <Card className="space-y-3">
       <div className="flex items-start justify-between gap-2">
@@ -57,6 +58,11 @@ export function RoutineCard({ routine, onEdit, onDuplicate, onDelete }: RoutineC
             </p>
           )}
         </div>
+      )}
+
+      {/* Start workout */}
+      {routine.exercises.length > 0 && (
+        <Button size="sm" onClick={onStart} fullWidth>▶ Iniciar entrenamiento</Button>
       )}
 
       {/* Actions */}

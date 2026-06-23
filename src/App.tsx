@@ -80,6 +80,7 @@ export default function App() {
                   onDelete={deleteRoutine}
                   onDuplicate={duplicateRoutine}
                   getOrCreateExercise={getOrCreate}
+                  onSaveLog={addOrUpdateLog}
                 />
               }
             />

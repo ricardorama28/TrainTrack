@@ -4,7 +4,8 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { RoutineCard } from '../components/routines/RoutineCard';
 import { RoutineForm } from '../components/routines/RoutineForm';
 import { ImportRoutine } from '../components/routines/ImportRoutine';
-import type { Routine, ParsedDay, ExerciseTemplate, Exercise, ExerciseCategory, MuscleGroup } from '../types';
+import { WorkoutSession } from '../components/workout/WorkoutSession';
+import type { Routine, ParsedDay, ExerciseTemplate, Exercise, ExerciseCategory, MuscleGroup, WorkoutLog } from '../types';
 
 function newId(): string {
   return typeof crypto !== 'undefined' && crypto.randomUUID
@@ -26,12 +27,14 @@ interface RoutinesPageProps {
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
   getOrCreateExercise: (name: string, defaults?: Partial<Omit<Exercise, 'id' | 'createdAt' | 'nameLower' | 'name'>>) => Exercise;
+  onSaveLog: (log: Omit<WorkoutLog, 'id'>) => void;
 }
 
-export function RoutinesPage({ routines, onAdd, onUpdate, onDelete, onDuplicate, getOrCreateExercise }: RoutinesPageProps) {
+export function RoutinesPage({ routines, onAdd, onUpdate, onDelete, onDuplicate, getOrCreateExercise, onSaveLog }: RoutinesPageProps) {
   const [formOpen, setFormOpen] = useState(false);
   const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [activeRoutine, setActiveRoutine] = useState<Routine | null>(null);
 
   function handleSaveRoutine(data: Omit<Routine, 'id' | 'createdAt'>) {
     if (editingRoutine) {
@@ -112,6 +115,7 @@ export function RoutinesPage({ routines, onAdd, onUpdate, onDelete, onDuplicate,
             <RoutineCard
               key={routine.id}
               routine={routine}
+              onStart={() => setActiveRoutine(routine)}
               onEdit={() => { setEditingRoutine(routine); setFormOpen(true); }}
               onDuplicate={() => onDuplicate(routine.id)}
               onDelete={() => {
@@ -134,6 +138,14 @@ export function RoutinesPage({ routines, onAdd, onUpdate, onDelete, onDuplicate,
         onClose={() => setImportOpen(false)}
         onImport={handleImport}
       />
+
+      {activeRoutine && (
+        <WorkoutSession
+          routine={activeRoutine}
+          onCancel={() => setActiveRoutine(null)}
+          onFinish={(log) => { onSaveLog(log); setActiveRoutine(null); }}
+        />
+      )}
     </div>
   );
 }
