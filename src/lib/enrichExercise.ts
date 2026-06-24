@@ -58,6 +58,8 @@ export function enrichExerciseFromKnowledgeBase(ex: Exercise): Exercise {
   fillScalar('description', entry.description);
   fillScalar('purpose', entry.purpose);
   fillScalar('safetyNotes', entry.safetyNotes);
+  fillScalar('movementPattern', entry.movementPattern);
+  fillScalar('postureFocus', entry.postureFocus);
   fillArray('primaryMuscles', entry.primaryMuscles);
   fillArray('secondaryMuscles', entry.secondaryMuscles);
   fillArray('equipment', entry.equipment);

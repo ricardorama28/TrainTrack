@@ -244,20 +244,74 @@ export function ExercisesPage({ logs, routines, exercises, onUpdateExercise }: E
                     </a>
                   </>
                 )}
-                <div className="flex-1" />
-                {(lib?.simpleInstructions?.length || lib?.commonMistakes?.length || lib?.safetyNotes || lib?.equipment?.length || row.totalSessions > 0) && (
-                  <button
-                    onClick={() => setExpanded(isOpen ? null : row.name)}
-                    className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-                  >
-                    {isOpen ? '▲ Menos' : '▼ Más'}
-                  </button>
-                )}
               </div>
+
+              {/* Detail toggle — always visible so any exercise can be opened */}
+              <button
+                onClick={() => setExpanded(isOpen ? null : row.name)}
+                className="mt-2 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              >
+                {isOpen ? 'Ocultar detalle ▲' : 'Ver detalle ▼'}
+              </button>
 
               {/* Expanded detail */}
               {isOpen && (
                 <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800 space-y-3">
+                  {/* No knowledge yet → helpful empty state */}
+                  {!lib?.description && !lib?.purpose &&
+                   !(lib?.simpleInstructions?.length) && !(lib?.commonMistakes?.length) &&
+                   !lib?.safetyNotes && !lib?.technicalNotes && (
+                    <div className="rounded-xl bg-gray-100 dark:bg-gray-800 p-3">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Sin descripción todavía. Podés enriquecer este ejercicio desde
+                        <span className="font-medium text-gray-600 dark:text-gray-300"> Ajustes → Enriquecer ejercicios existentes</span>
+                        {lib ? ', o editarlo manualmente con el lápiz ✏️.' : '.'}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* What it is */}
+                  {lib?.description && (
+                    <div>
+                      <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">📖 Qué es</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">{lib.description}</p>
+                    </div>
+                  )}
+
+                  {/* What it's for */}
+                  {lib?.purpose && (
+                    <div>
+                      <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">🎯 Para qué sirve</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">{lib.purpose}</p>
+                    </div>
+                  )}
+
+                  {/* Movement pattern / posture chips */}
+                  {(lib?.movementPattern || lib?.postureFocus) && (
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {lib?.movementPattern && <Badge variant="teal">{lib.movementPattern}</Badge>}
+                      {lib?.postureFocus && <Badge variant="orange">Postura</Badge>}
+                    </div>
+                  )}
+
+                  {/* Muscles */}
+                  {(lib?.primaryMuscles?.length || lib?.secondaryMuscles?.length) && (
+                    <div className="space-y-1.5">
+                      {lib?.primaryMuscles && lib.primaryMuscles.length > 0 && (
+                        <div className="flex items-start gap-1.5 flex-wrap">
+                          <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">💪 Principales:</span>
+                          {lib.primaryMuscles.map(m => <Badge key={m} variant="purple">{m}</Badge>)}
+                        </div>
+                      )}
+                      {lib?.secondaryMuscles && lib.secondaryMuscles.length > 0 && (
+                        <div className="flex items-start gap-1.5 flex-wrap">
+                          <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">🤝 Secundarios:</span>
+                          {lib.secondaryMuscles.map(m => <Badge key={m} variant="gray">{m}</Badge>)}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {lib?.simpleInstructions && lib.simpleInstructions.length > 0 && (
                     <DetailList title="📋 Instrucciones" items={lib.simpleInstructions} ordered />
                   )}
@@ -276,6 +330,15 @@ export function ExercisesPage({ logs, routines, exercises, onUpdateExercise }: E
                       {lib.equipment.map(eq => <Badge key={eq} variant="blue">{eq}</Badge>)}
                     </div>
                   )}
+
+                  {/* Personal notes */}
+                  {lib?.technicalNotes && (
+                    <div>
+                      <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">📝 Notas personales</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-pre-line">{lib.technicalNotes}</p>
+                    </div>
+                  )}
+
                   {row.totalSessions > 0 && (
                     <button
                       onClick={() => setSelectedExercise(row.name)}

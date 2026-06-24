@@ -48,6 +48,8 @@ export interface Exercise {
   secondaryMuscles?: string[];   // descriptive, e.g. "Isquiotibiales"
   equipment?: string[];
   category?: ExerciseCategory;
+  movementPattern?: string;      // e.g. "Bisagra de cadera", "Empuje vertical" — for future filters/badges
+  postureFocus?: boolean;        // true for postural/scapular/corrective work
 
   // Knowledge / coaching content
   description?: string;
