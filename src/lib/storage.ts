@@ -1,4 +1,46 @@
-import type { WorkoutLog, Routine, Settings, AppData, Exercise } from '../types';
+import type { WorkoutLog, WorkoutType, Routine, Settings, AppData, Exercise } from '../types';
+
+// ─── Sanitization ──────────────────────────────────────────────────────────────
+// Defensive layer: a single malformed/legacy log (e.g. a missing `date` or
+// `exercises`) must never reach React and crash the whole app. We repair what we
+// safely can and drop entries that are beyond repair.
+
+const VALID_WORKOUT_TYPES: WorkoutType[] = ['workout', 'rest', 'active-rest', 'missed'];
+
+/** Normalize a value into a YYYY-MM-DD string, or null if it can't be one. */
+function normalizeDate(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const d = value.slice(0, 10); // tolerate ISO "YYYY-MM-DDTHH:MM:SSZ"
+  return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null;
+}
+
+/**
+ * Coerce arbitrary stored/cloud data into well-formed WorkoutLog[]:
+ * - drops entries without a valid date (the crash vector),
+ * - guarantees `exercises` is an array,
+ * - guarantees a valid `type` (defaults to 'workout').
+ */
+export function sanitizeWorkoutLogs(raw: unknown): WorkoutLog[] {
+  if (!Array.isArray(raw)) return [];
+  const out: WorkoutLog[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue;
+    const log = item as Record<string, unknown>;
+    const date = normalizeDate(log.date);
+    if (!date) continue; // unrepairable — skip
+    const type = VALID_WORKOUT_TYPES.includes(log.type as WorkoutType)
+      ? (log.type as WorkoutType)
+      : 'workout';
+    out.push({
+      ...(log as object),
+      id: typeof log.id === 'string' && log.id ? log.id : `${date}-${out.length}`,
+      date,
+      type,
+      exercises: Array.isArray(log.exercises) ? log.exercises : [],
+    } as WorkoutLog);
+  }
+  return out;
+}
 
 // ─── Storage Keys ─────────────────────────────────────────────────────────────
 
@@ -64,7 +106,7 @@ function set<T>(key: string, value: T): void {
 
 export const storage = {
   // Workout logs
-  getWorkoutLogs: (): WorkoutLog[] => get<WorkoutLog[]>(KEYS.WORKOUT_LOGS, []),
+  getWorkoutLogs: (): WorkoutLog[] => sanitizeWorkoutLogs(get<unknown>(KEYS.WORKOUT_LOGS, [])),
   setWorkoutLogs: (logs: WorkoutLog[]): void => set(KEYS.WORKOUT_LOGS, logs),
 
   // Routines
@@ -96,7 +138,7 @@ export const storage = {
   },
 
   importAll: (data: AppData): void => {
-    if (Array.isArray(data.workoutLogs)) storage.setWorkoutLogs(data.workoutLogs);
+    if (Array.isArray(data.workoutLogs)) storage.setWorkoutLogs(sanitizeWorkoutLogs(data.workoutLogs));
     if (Array.isArray(data.routines))    storage.setRoutines(data.routines);
     // Backward-compat: older backups may not include exercises
     if (Array.isArray(data.exercises))   storage.setExercises(data.exercises);

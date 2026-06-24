@@ -50,7 +50,7 @@ export function MonthCalendar({ year, month, logs, onDayClick }: MonthCalendarPr
 
         {days.map(date => {
           const log = logMap.get(date);
-          const dayNum = parseLocalDate(date).getDate();
+          const dayNum = parseLocalDate(date)?.getDate() ?? Number(date.slice(-2));
           const isToday = date === today;
           const isFuture = date > today;
 

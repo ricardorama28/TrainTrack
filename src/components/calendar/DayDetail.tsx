@@ -38,7 +38,10 @@ export function DayDetail({ date, log, routines, onClose, onSave, onDelete }: Da
 
   if (!date) return null;
 
+  const isValidDate = /^\d{4}-\d{2}-\d{2}$/.test(editDate);
+
   function handleSave() {
+    if (!isValidDate) return; // never persist a log without a valid date
     const selectedRoutine = routines.find(r => r.id === routineId);
     onSave({
       date: editDate,
@@ -170,7 +173,7 @@ export function DayDetail({ date, log, routines, onClose, onSave, onDelete }: Da
           <Button variant="secondary" onClick={onClose} className="flex-1">
             Cancelar
           </Button>
-          <Button onClick={handleSave} className="flex-1">
+          <Button onClick={handleSave} disabled={!isValidDate} className="flex-1">
             Guardar
           </Button>
         </div>
