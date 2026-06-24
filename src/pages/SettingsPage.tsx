@@ -3,7 +3,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { DataManagement } from '../components/settings/DataManagement';
 import { useAuth } from '../context/AuthContext';
-import { getSyncState, onSyncStateChange, type SyncState } from '../lib/cloudSync';
+import { getSyncState, onSyncStateChange, pushToCloud, type SyncState } from '../lib/cloudSync';
 import type { Settings } from '../types';
 
 interface SettingsPageProps {
@@ -67,9 +67,14 @@ function AccountSection() {
                   : `Sincronizado ${relativeTime(sync.lastSyncedAt)}`}
             </p>
             {sync.error && (
-              <p className="text-xs text-red-500 mt-0.5">{sync.error}</p>
+              <p className="text-xs text-red-500 mt-1 font-mono break-all">{sync.error}</p>
             )}
           </div>
+          {sync.error && !sync.syncing && (
+            <Button variant="secondary" fullWidth onClick={() => void pushToCloud(user.id)}>
+              🔄 Reintentar sincronización
+            </Button>
+          )}
           <Button variant="secondary" fullWidth onClick={() => void signOut()}>
             Cerrar sesión
           </Button>

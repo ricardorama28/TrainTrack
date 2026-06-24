@@ -7,17 +7,13 @@ import { storage } from '../lib/storage';
 
 const LOCAL_ONLY_KEY = 'traintrack_local_only';
 
-/** Pending data-migration decision surfaced to the UI after sign-in. */
-export type MigrationPrompt =
-  | { kind: 'caseA'; userId: string } // cloud empty, local has data → offer upload
-  | { kind: 'caseC'; userId: string }; // both have data → conflict
+/** Pending data-migration decision surfaced to the UI after sign-in (only when both sides have data). */
+export type MigrationPrompt = { kind: 'caseC'; userId: string };
 
 export type MigrationChoice =
-  | 'upload' // case A: upload local to cloud
-  | 'skip' // case A: keep local only for now
-  | 'use-cloud' // case C: replace local with cloud
-  | 'upload-local' // case C: replace cloud with local
-  | 'keep-local'; // case C: do nothing now
+  | 'use-cloud' // replace local with cloud
+  | 'upload-local' // replace cloud with local
+  | 'keep-local'; // do nothing now; auto-sync picks it up later
 
 interface AuthContextValue {
   configured: boolean;
@@ -52,11 +48,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const cloudHas = await cloudHasData(userId);
 
     if (cloudHas && !localHas) {
-      await pullFromCloud(userId); // Case B: cloud → local
+      await pullFromCloud(userId); // Case B: cloud → local, silent
     } else if (!cloudHas && localHas) {
-      setMigrationPrompt({ kind: 'caseA', userId }); // Case A: ask to upload
+      await pushToCloud(userId); // Case A: local → cloud, automatic (no prompt)
     } else if (cloudHas && localHas) {
-      setMigrationPrompt({ kind: 'caseC', userId }); // Case C: conflict
+      setMigrationPrompt({ kind: 'caseC', userId }); // Case C: conflict, ask
     }
     // both empty → nothing to do
   }, []);
@@ -131,15 +127,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setMigrationPrompt(null);
     if (!prompt) return;
     switch (choice) {
-      case 'upload': // case A
-      case 'upload-local': // case C
+      case 'upload-local':
         await pushToCloud(prompt.userId);
         break;
-      case 'use-cloud': // case C
+      case 'use-cloud':
         await pullFromCloud(prompt.userId);
         break;
-      case 'skip': // case A — keep local, cloud stays empty
-      case 'keep-local': // case C — do nothing now
+      case 'keep-local':
         break;
     }
   }, [migrationPrompt]);

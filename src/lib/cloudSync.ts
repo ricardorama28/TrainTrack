@@ -3,6 +3,12 @@ import { storage } from './storage';
 import type { AppData } from '../types';
 
 const TABLE = 'user_data';
+
+function extractErrorMessage(e: unknown): string {
+  if (e instanceof Error) return e.message;
+  if (e != null && typeof e === 'object' && 'message' in e) return String((e as { message: unknown }).message);
+  return 'Error de sincronización';
+}
 const DEBOUNCE_MS = 2000;
 
 // ─── Sync state (observable) ────────────────────────────────────────────────────
@@ -59,7 +65,7 @@ export async function pushToCloud(userId: string): Promise<void> {
     if (error) throw error;
     setState({ syncing: false, lastSyncedAt: new Date().toISOString(), error: null });
   } catch (e) {
-    setState({ syncing: false, error: e instanceof Error ? e.message : 'Error de sincronización' });
+    setState({ syncing: false, error: extractErrorMessage(e) });
   }
 }
 
@@ -116,7 +122,7 @@ export async function pullFromCloud(userId: string): Promise<CloudData> {
     setState({ syncing: false, lastSyncedAt: new Date().toISOString(), error: null });
     return { hasData };
   } catch (e) {
-    setState({ syncing: false, error: e instanceof Error ? e.message : 'Error de sincronización' });
+    setState({ syncing: false, error: extractErrorMessage(e) });
     return { hasData: false };
   } finally {
     suppressSync = false;
