@@ -36,6 +36,31 @@ function googleSearchUrl(name: string): string {
   return `https://www.google.com/search?q=${encodeURIComponent(name + ' ejercicio técnica')}`;
 }
 
+/**
+ * Converts a YouTube watch/shorts URL to its embeddable /embed/ form.
+ * Returns null for non-video URLs (search results, non-YouTube, etc.)
+ * so callers can skip rendering the iframe entirely.
+ */
+function getYouTubeEmbedUrl(url: string): string | null {
+  try {
+    const u = new URL(url);
+    let videoId: string | null = null;
+
+    if ((u.hostname === 'www.youtube.com' || u.hostname === 'youtube.com') && u.pathname === '/watch') {
+      videoId = u.searchParams.get('v');
+    } else if (u.hostname === 'youtu.be') {
+      videoId = u.pathname.slice(1).split('?')[0];
+    } else if ((u.hostname === 'www.youtube.com' || u.hostname === 'youtube.com') && u.pathname.startsWith('/shorts/')) {
+      videoId = u.pathname.split('/')[2];
+    }
+
+    if (!videoId) return null;
+    return `https://www.youtube.com/embed/${videoId}`;
+  } catch {
+    return null;
+  }
+}
+
 interface ExercisesPageProps {
   logs: WorkoutLog[];
   routines: Routine[];
@@ -257,6 +282,24 @@ export function ExercisesPage({ logs, routines, exercises, onUpdateExercise }: E
               {/* Expanded detail */}
               {isOpen && (
                 <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800 space-y-3">
+                  {/* Inline YouTube embed — loads only when detail is open */}
+                  {(() => {
+                    const embedUrl = getYouTubeEmbedUrl(row.referenceUrl ?? '');
+                    if (!embedUrl) return null;
+                    return (
+                      <div className="rounded-xl overflow-hidden aspect-video bg-black">
+                        <iframe
+                          src={embedUrl}
+                          title={`Referencia: ${row.name}`}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          loading="lazy"
+                          className="w-full h-full"
+                        />
+                      </div>
+                    );
+                  })()}
+
                   {/* No knowledge yet → helpful empty state */}
                   {!lib?.description && !lib?.purpose &&
                    !(lib?.simpleInstructions?.length) && !(lib?.commonMistakes?.length) &&

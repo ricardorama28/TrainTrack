@@ -572,8 +572,8 @@ export const EXERCISE_KNOWLEDGE_BASE: ExerciseKnowledgeEntry[] = [
       'Usar demasiado peso y perder la calidad del movimiento.',
     ],
     safetyNotes: 'Usá poco o ningún peso; el foco es la activación y el control escapular, no la carga. Mantené el cuello neutro.',
-    referenceUrl: ytSearch('Y T W raises ejercicio técnica espalda'),
-    referenceType: 'web',
+    referenceUrl: 'https://www.youtube.com/watch?v=GNwtUiH6G5Q',
+    referenceType: 'youtube',
   },
   {
     name: 'Wall slides',
@@ -629,8 +629,8 @@ export const EXERCISE_KNOWLEDGE_BASE: ExerciseKnowledgeEntry[] = [
       'Usar un rango excesivo: el recorrido es corto.',
     ],
     safetyNotes: 'Movimiento corto y controlado; el rango es pequeño y el foco es la calidad de la contracción, no la carga.',
-    referenceUrl: ytSearch('retracción escapular ejercicio técnica'),
-    referenceType: 'web',
+    referenceUrl: 'https://www.youtube.com/watch?v=9vMKjCnkWHo',
+    referenceType: 'youtube',
   },
   {
     name: 'Estiramiento de pectoral en puerta',
@@ -657,8 +657,8 @@ export const EXERCISE_KNOWLEDGE_BASE: ExerciseKnowledgeEntry[] = [
       'Contener la respiración.',
     ],
     safetyNotes: 'Estiramiento suave y mantenido; debe sentirse tensión, nunca dolor. Probá distintas alturas del codo para enfocar distintas fibras del pectoral.',
-    referenceUrl: ytSearch('estiramiento de pectoral en puerta técnica'),
-    referenceType: 'web',
+    referenceUrl: 'https://www.youtube.com/watch?v=YqBIBFaWQ_4',
+    referenceType: 'youtube',
   },
 ];
 
