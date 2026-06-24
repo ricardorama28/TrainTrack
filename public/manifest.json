@@ -5,7 +5,7 @@
   "start_url": "/",
   "display": "standalone",
   "background_color": "#12121f",
-  "theme_color": "#22c55e",
+  "theme_color": "#7c3aed",
   "orientation": "portrait",
   "categories": ["fitness", "health"],
   "icons": [
