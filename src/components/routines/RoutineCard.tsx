@@ -9,11 +9,15 @@ interface RoutineCardProps {
   onEdit: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
 }
 
 const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
-export function RoutineCard({ routine, onStart, onEdit, onDuplicate, onDelete }: RoutineCardProps) {
+export function RoutineCard({ routine, onStart, onEdit, onDuplicate, onDelete, onMoveUp, onMoveDown, canMoveUp, canMoveDown }: RoutineCardProps) {
   return (
     <Card className="space-y-3">
       <div className="flex items-start justify-between gap-2">
@@ -69,6 +73,8 @@ export function RoutineCard({ routine, onStart, onEdit, onDuplicate, onDelete }:
 
       {/* Actions */}
       <div className="flex gap-2 border-t border-gray-100 dark:border-gray-800 pt-2">
+        <Button variant="ghost" size="sm" onClick={onMoveUp} disabled={!canMoveUp} aria-label="Subir rutina">↑</Button>
+        <Button variant="ghost" size="sm" onClick={onMoveDown} disabled={!canMoveDown} aria-label="Bajar rutina">↓</Button>
         <Button variant="ghost" size="sm" onClick={onEdit} className="flex-1">✏️ Editar</Button>
         <Button variant="ghost" size="sm" onClick={onDuplicate}>📋</Button>
         <Button variant="ghost" size="sm" onClick={onDelete} className="text-red-500 dark:text-red-400">🗑️</Button>

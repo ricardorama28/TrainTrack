@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { AuthPage } from '../../pages/AuthPage';
-import { SyncConflictModal } from '../sync/SyncConflictModal';
 
 /**
  * Gates the app behind authentication when Supabase is configured.
@@ -24,10 +23,5 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   if (!user && !localOnly) return <AuthPage />;
 
-  return (
-    <>
-      {children}
-      <SyncConflictModal />
-    </>
-  );
+  return <>{children}</>;
 }

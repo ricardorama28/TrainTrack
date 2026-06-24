@@ -57,6 +57,17 @@ export function useRoutines() {
     }));
   }, [save]);
 
+  const moveRoutine = useCallback((id: string, direction: 'up' | 'down') => {
+    const current = storage.getRoutines();
+    const index = current.findIndex(r => r.id === id);
+    if (index === -1) return;
+    const target = direction === 'up' ? index - 1 : index + 1;
+    if (target < 0 || target >= current.length) return;
+    const updated = [...current];
+    [updated[index], updated[target]] = [updated[target], updated[index]];
+    save(updated);
+  }, [save]);
+
   const refresh = useCallback(() => {
     setRoutines(storage.getRoutines());
   }, []);
@@ -68,6 +79,7 @@ export function useRoutines() {
     deleteRoutine,
     duplicateRoutine,
     addExerciseToRoutine,
+    moveRoutine,
     refresh,
   };
 }

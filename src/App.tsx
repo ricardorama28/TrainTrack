@@ -19,7 +19,7 @@ import { schedulePush } from './lib/cloudSync';
 
 function AppShell() {
   const { logs, addOrUpdateLog, deleteLog, refresh: refreshLogs } = useWorkouts();
-  const { routines, addRoutine, updateRoutine, deleteRoutine, duplicateRoutine, refresh: refreshRoutines } = useRoutines();
+  const { routines, addRoutine, updateRoutine, deleteRoutine, duplicateRoutine, moveRoutine, refresh: refreshRoutines } = useRoutines();
   const { exercises, getOrCreate, updateExercise, enrichExisting, refresh: refreshExercises } = useExercises();
   const { settings, updateSettings, refresh: refreshSettings } = useSettings();
   const { user } = useAuth();
@@ -36,6 +36,15 @@ function AppShell() {
       refreshExercises();
     }
   }, []);
+
+  // Keep the exercise library enriched automatically from the local knowledge
+  // base. enrichExisting only fills empty fields, never overwrites manual/
+  // accepted references, and only saves when something changed — so it's
+  // idempotent and converges (no loop). Runs on mount and whenever the
+  // exercise list changes (e.g. after a cloud pull brings un-enriched data).
+  useEffect(() => {
+    enrichExisting();
+  }, [exercises, enrichExisting]);
 
   // Apply dark mode on mount and when it changes
   useEffect(() => {
@@ -96,6 +105,7 @@ function AppShell() {
                   onUpdate={updateRoutine}
                   onDelete={deleteRoutine}
                   onDuplicate={duplicateRoutine}
+                  onMove={moveRoutine}
                   getOrCreateExercise={getOrCreate}
                   onSaveLog={addOrUpdateLog}
                   autoEnrich={settings.autoEnrich}
@@ -120,7 +130,6 @@ function AppShell() {
                   settings={settings}
                   onUpdate={updateSettings}
                   onDataChange={handleDataChange}
-                  onEnrichExisting={enrichExisting}
                 />
               }
             />

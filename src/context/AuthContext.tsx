@@ -7,26 +7,16 @@ import { storage } from '../lib/storage';
 
 const LOCAL_ONLY_KEY = 'traintrack_local_only';
 
-/** Pending data-migration decision surfaced to the UI after sign-in (only when both sides have data). */
-export type MigrationPrompt = { kind: 'caseC'; userId: string };
-
-export type MigrationChoice =
-  | 'use-cloud' // replace local with cloud
-  | 'upload-local' // replace cloud with local
-  | 'keep-local'; // do nothing now; auto-sync picks it up later
-
 interface AuthContextValue {
   configured: boolean;
   user: User | null;
   loading: boolean;
   localOnly: boolean;
-  migrationPrompt: MigrationPrompt | null;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   enterLocalOnly: () => void;
-  resolveMigration: (choice: MigrationChoice) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -37,22 +27,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [localOnly, setLocalOnly] = useState(
     () => localStorage.getItem(LOCAL_ONLY_KEY) === 'true',
   );
-  const [migrationPrompt, setMigrationPrompt] = useState<MigrationPrompt | null>(null);
 
   // Track which user id we already ran migration for, so token refreshes
   // (which re-fire onAuthStateChange) don't repeat the migration.
   const migratedFor = useRef<string | null>(null);
 
+  // Cloud-first policy when signed in: the cloud is the source of truth.
   const runMigration = useCallback(async (userId: string) => {
     const localHas = storage.hasLocalData();
     const cloudHas = await cloudHasData(userId);
 
-    if (cloudHas && !localHas) {
-      await pullFromCloud(userId); // Case B: cloud → local, silent
-    } else if (!cloudHas && localHas) {
-      await pushToCloud(userId); // Case A: local → cloud, automatic (no prompt)
-    } else if (cloudHas && localHas) {
-      setMigrationPrompt({ kind: 'caseC', userId }); // Case C: conflict, ask
+    if (cloudHas) {
+      await pullFromCloud(userId); // Cloud has data → it wins (no conflict prompt).
+    } else if (localHas) {
+      await pushToCloud(userId); // Cloud empty, local has data → seed the cloud.
     }
     // both empty → nothing to do
   }, []);
@@ -122,34 +110,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLocalOnly(true);
   }, []);
 
-  const resolveMigration = useCallback(async (choice: MigrationChoice) => {
-    const prompt = migrationPrompt;
-    setMigrationPrompt(null);
-    if (!prompt) return;
-    switch (choice) {
-      case 'upload-local':
-        await pushToCloud(prompt.userId);
-        break;
-      case 'use-cloud':
-        await pullFromCloud(prompt.userId);
-        break;
-      case 'keep-local':
-        break;
-    }
-  }, [migrationPrompt]);
-
   const value: AuthContextValue = {
     configured: isSupabaseConfigured,
     user,
     loading,
     localOnly,
-    migrationPrompt,
     signIn,
     signUp,
     signInWithGoogle,
     signOut,
     enterLocalOnly,
-    resolveMigration,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
