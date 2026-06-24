@@ -32,9 +32,29 @@ function get<T>(key: string, fallback: T): T {
   }
 }
 
+// ─── Change notification ───────────────────────────────────────────────────────
+// Lets the cloud-sync layer react to local writes without modifying the hooks.
+
+type Listener = () => void;
+const listeners = new Set<Listener>();
+
+function notify(): void {
+  listeners.forEach(cb => {
+    try {
+      cb();
+    } catch (e) {
+      console.error('storage onChange listener failed:', e);
+    }
+  });
+}
+
 function set<T>(key: string, value: T): void {
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    const next = JSON.stringify(value);
+    const prev = localStorage.getItem(key);
+    if (prev === next) return; // no-op: value unchanged, don't notify
+    localStorage.setItem(key, next);
+    notify();
   } catch (e) {
     console.error('Storage write failed:', e);
   }
@@ -85,5 +105,20 @@ export const storage = {
 
   clearAll: (): void => {
     Object.values(KEYS).forEach(k => localStorage.removeItem(k));
+    notify();
+  },
+
+  /** True when there is any user-created data worth syncing. */
+  hasLocalData: (): boolean =>
+    storage.getWorkoutLogs().length > 0 ||
+    storage.getRoutines().length > 0 ||
+    storage.getExercises().length > 0,
+
+  /** Subscribe to local writes. Returns an unsubscribe function. */
+  onChange: (cb: Listener): (() => void) => {
+    listeners.add(cb);
+    return () => {
+      listeners.delete(cb);
+    };
   },
 };

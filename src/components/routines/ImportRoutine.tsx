@@ -13,6 +13,35 @@ const VALID_MUSCLE_GROUPS = new Set<string>([
   'glutes', 'legs', 'back', 'chest', 'shoulders', 'arms', 'core', 'full-body', 'mobility', 'other',
 ]);
 
+/**
+ * Cleans up pasted JSON before parsing. Handles the common real-world cases:
+ * - iOS/ChatGPT smart quotes (“ ” « » ‘ ’ ′) → straight quotes
+ * - markdown code fences (```json ... ```)
+ * - leading/trailing prose around the JSON object
+ */
+function sanitizeJsonInput(input: string): string {
+  let text = input.trim();
+
+  // Strip markdown code fences
+  text = text
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/```\s*$/i, '')
+    .trim();
+
+  // If there is text before/after, extract from the first { to the last }
+  const firstBrace = text.indexOf('{');
+  const lastBrace = text.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    text = text.slice(firstBrace, lastBrace + 1);
+  }
+
+  // Smart/typographic quotes → straight quotes
+  return text
+    .replace(/[“”«»]/g, '"')
+    .replace(/[‘’′]/g, "'");
+}
+
 function validateAndConvert(raw: unknown): ParsedDay[] {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
     throw new Error('El JSON debe ser un objeto con una propiedad "days"');
@@ -158,7 +187,7 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
     setJsonError(null);
     let raw: unknown;
     try {
-      raw = JSON.parse(jsonInput);
+      raw = JSON.parse(sanitizeJsonInput(jsonInput));
     } catch {
       setJsonError('JSON inválido — revisá que las comillas, comas y llaves estén bien cerradas.');
       return;

@@ -13,12 +13,16 @@ import { useSettings } from './hooks/useSettings';
 import { storage } from './lib/storage';
 import { buildSampleData } from './lib/sampleData';
 import { enrichExerciseFromKnowledgeBase } from './lib/enrichExercise';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthGate } from './components/auth/AuthGate';
+import { schedulePush } from './lib/cloudSync';
 
-export default function App() {
+function AppShell() {
   const { logs, addOrUpdateLog, deleteLog, refresh: refreshLogs } = useWorkouts();
   const { routines, addRoutine, updateRoutine, deleteRoutine, duplicateRoutine, refresh: refreshRoutines } = useRoutines();
   const { exercises, getOrCreate, updateExercise, enrichExisting, refresh: refreshExercises } = useExercises();
   const { settings, updateSettings, refresh: refreshSettings } = useSettings();
+  const { user } = useAuth();
 
   // Load sample data on first run (routines + derived exercise library)
   useEffect(() => {
@@ -45,6 +49,16 @@ export default function App() {
     refreshExercises();
     refreshSettings();
   }, [refreshLogs, refreshRoutines, refreshExercises, refreshSettings]);
+
+  // Keep the UI in sync with local writes (including those from a cloud pull),
+  // and push local changes to the cloud when signed in (debounced; a pull
+  // suppresses the push internally to avoid a feedback loop).
+  useEffect(() => {
+    return storage.onChange(() => {
+      handleDataChange();
+      if (user) schedulePush(user.id);
+    });
+  }, [user, handleDataChange]);
 
   return (
     <BrowserRouter>
@@ -115,5 +129,15 @@ export default function App() {
         <BottomNav />
       </div>
     </BrowserRouter>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AuthGate>
+        <AppShell />
+      </AuthGate>
+    </AuthProvider>
   );
 }

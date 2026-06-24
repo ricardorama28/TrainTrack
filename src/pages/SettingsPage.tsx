@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { DataManagement } from '../components/settings/DataManagement';
+import { useAuth } from '../context/AuthContext';
+import { getSyncState, onSyncStateChange, type SyncState } from '../lib/cloudSync';
 import type { Settings } from '../types';
 
 interface SettingsPageProps {
@@ -25,6 +27,67 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
         checked ? 'translate-x-5 ml-0.5' : 'translate-x-0.5'
       }`} />
     </div>
+  );
+}
+
+function relativeTime(iso: string | null): string {
+  if (!iso) return 'todavía no sincronizado';
+  const diff = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return 'recién';
+  if (min < 60) return `hace ${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `hace ${h} h`;
+  const d = Math.floor(h / 24);
+  return `hace ${d} d`;
+}
+
+function AccountSection() {
+  const { configured, user, localOnly, signOut } = useAuth();
+  const [sync, setSync] = useState<SyncState>(getSyncState());
+
+  useEffect(() => onSyncStateChange(setSync), []);
+
+  // Supabase not configured → no account features at all.
+  if (!configured) return null;
+
+  return (
+    <Card>
+      <h2 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">Cuenta</h2>
+
+      {user ? (
+        <div className="space-y-3">
+          <div>
+            <p className="text-sm text-gray-700 dark:text-gray-200">{user.email}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              {sync.error
+                ? '⚠️ Error de sincronización'
+                : sync.syncing
+                  ? 'Sincronizando…'
+                  : `Sincronizado ${relativeTime(sync.lastSyncedAt)}`}
+            </p>
+            {sync.error && (
+              <p className="text-xs text-red-500 mt-0.5">{sync.error}</p>
+            )}
+          </div>
+          <Button variant="secondary" fullWidth onClick={() => void signOut()}>
+            Cerrar sesión
+          </Button>
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            Cerrar sesión no borra los datos de este dispositivo. Para eliminarlos, usá "Borrar todos los datos" más abajo.
+          </p>
+        </div>
+      ) : localOnly ? (
+        <div className="space-y-3">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            Estás usando la app sin cuenta. Tus datos se guardan solo en este dispositivo.
+          </p>
+          <Button fullWidth onClick={() => void signOut()}>
+            Iniciar sesión para sincronizar
+          </Button>
+        </div>
+      ) : null}
+    </Card>
   );
 }
 
@@ -60,6 +123,9 @@ export function SettingsPage({ settings, onUpdate, onDataChange, onEnrichExistin
   return (
     <div className="space-y-5">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Ajustes</h1>
+
+      {/* Account & sync */}
+      <AccountSection />
 
       {/* Weekly goal */}
       <Card>

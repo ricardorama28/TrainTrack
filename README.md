@@ -98,6 +98,83 @@ La app detecta días, ejercicios, series, repeticiones y pesos. Podés editar to
 
 ---
 
+## Autenticación y sincronización en la nube (opcional)
+
+La app funciona **sin cuenta** por defecto (todo local). Si configurás Supabase, se
+habilita login con email/password y con Google, y los datos se sincronizan entre
+dispositivos. Sin las variables de entorno, la pantalla de login no aparece y la app
+sigue siendo 100% local-first.
+
+### Arquitectura
+
+```
+hooks → localStorage (síncrono, offline) → sync debounced → Supabase
+```
+
+localStorage es la fuente rápida/offline; un push debounced (~2 s) sube los cambios a
+Supabase cuando hay sesión. Al iniciar sesión se hace pull/merge según los datos
+existentes. Cerrar sesión **no borra** los datos locales.
+
+### 1. Crear el proyecto y la tabla
+
+En [supabase.com](https://supabase.com) creá un proyecto y, en **SQL Editor**, ejecutá:
+
+```sql
+create table user_data (
+  user_id uuid references auth.users(id) on delete cascade primary key,
+  workout_logs jsonb not null default '[]'::jsonb,
+  routines     jsonb not null default '[]'::jsonb,
+  exercises    jsonb not null default '[]'::jsonb,
+  settings     jsonb,
+  created_at   timestamptz default now(),
+  updated_at   timestamptz default now()
+);
+
+alter table user_data enable row level security;
+
+create policy "own data" on user_data
+  for all using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+```
+
+RLS garantiza que cada usuario solo accede a su propia fila.
+
+### 2. Variables de entorno
+
+Copiá `.env.example` a `.env.local` y completá con los valores de
+**Settings → API** del dashboard:
+
+```env
+VITE_SUPABASE_URL=https://xxxx.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJh...
+```
+
+La **anon key** es pública (puede ir en el frontend); la seguridad la da RLS.
+**Nunca** uses la `service_role` key en el frontend. `.env.local` no se commitea.
+
+### 3. Login con Google (OAuth)
+
+**En [Google Cloud Console](https://console.cloud.google.com):**
+1. Creá/seleccioná un proyecto.
+2. **APIs & Services → OAuth consent screen** → configurá (tipo "External", nombre, email).
+3. **APIs & Services → Credentials → Create Credentials → OAuth client ID** → tipo "Web application".
+4. En **Authorized redirect URIs** agregá la callback de Supabase:
+   `https://<tu-proyecto>.supabase.co/auth/v1/callback`
+5. Copiá el **Client ID** y **Client Secret**.
+
+**En el dashboard de Supabase:**
+1. **Authentication → Providers → Google** → activá (Enable).
+2. Pegá el **Client ID** y **Client Secret** de Google.
+3. **Authentication → URL Configuration → Redirect URLs**, agregá:
+   - `http://localhost:5173` (desarrollo — ajustá si tu puerto difiere)
+   - La URL de producción cuando la despliegues.
+4. Verificá que **Site URL** apunte al origin correcto.
+
+> El `redirectTo: window.location.origin` del código debe coincidir con una de las
+> Redirect URLs permitidas.
+
+---
+
 ## Despliegue
 
 ### Vercel (recomendado)
