@@ -9,19 +9,13 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { calculateCurrentStreak, calculateBestStreak } from '../lib/streaks';
 import { formatDateLong, relativeDate, todayStr } from '../lib/dates';
+import { useAuth } from '../context/AuthContext';
 import type { WorkoutLog, Routine, Settings } from '../types';
 
 interface DashboardProps {
   logs: WorkoutLog[];
   routines: Routine[];
   settings: Settings;
-}
-
-function getGreeting(): string {
-  const h = new Date().getHours();
-  if (h < 12) return 'Buenos días';
-  if (h < 19) return 'Buenas tardes';
-  return 'Buenas noches';
 }
 
 const FEELING_LABELS: Record<string, string> = {
@@ -33,6 +27,7 @@ const FEELING_LABELS: Record<string, string> = {
 
 export function Dashboard({ logs, routines, settings }: DashboardProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const currentStreak = useMemo(() => calculateCurrentStreak(logs, settings), [logs, settings]);
   const bestStreak = useMemo(() => calculateBestStreak(logs, settings), [logs, settings]);
 
@@ -45,13 +40,19 @@ export function Dashboard({ logs, routines, settings }: DashboardProps) {
 
   const todayLog = logs.find(l => l.date === todayStr());
 
+  const firstName = user?.user_metadata?.full_name?.split(' ')[0]
+                 ?? user?.email?.split('@')[0]
+                 ?? null;
+
   return (
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">{getGreeting()} 👋</p>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">TrainTrack</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">{formatDateLong(todayStr())}</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {firstName ? `¡Hola, ${firstName}!` : 'TrainTrack'}
+          </h1>
         </div>
         {!todayLog && (
           <Button size="sm" onClick={() => navigate('/calendar')}>

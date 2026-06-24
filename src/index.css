@@ -13,9 +13,8 @@
     overscroll-behavior: none;
   }
 
-  /* Slightly bluer dark background */
   .dark body {
-    background-color: #0d1117;
+    background-color: #0f0f0f;
   }
 
   * {

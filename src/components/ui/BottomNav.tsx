@@ -1,22 +1,23 @@
 import { NavLink } from 'react-router-dom';
+import { Home, Calendar, ClipboardList, Dumbbell, Settings2 } from 'lucide-react';
 
 const NAV_ITEMS = [
-  { to: '/',          icon: '🏠', label: 'Inicio'     },
-  { to: '/calendar',  icon: '📅', label: 'Calendario' },
-  { to: '/routines',  icon: '📋', label: 'Rutinas'    },
-  { to: '/exercises', icon: '💪', label: 'Ejercicios' },
-  { to: '/settings',  icon: '⚙️', label: 'Ajustes'   },
+  { to: '/',          Icon: Home,          label: 'Inicio'     },
+  { to: '/calendar',  Icon: Calendar,      label: 'Calendario' },
+  { to: '/routines',  Icon: ClipboardList, label: 'Rutinas'    },
+  { to: '/exercises', Icon: Dumbbell,      label: 'Ejercicios' },
+  { to: '/settings',  Icon: Settings2,     label: 'Ajustes'    },
 ];
 
 export function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 bg-gray-900/95 backdrop-blur-md border-t border-gray-800 safe-area-bottom">
       <div className="max-w-lg mx-auto flex px-1 py-1">
-        {NAV_ITEMS.map(item => (
+        {NAV_ITEMS.map(({ to, Icon, label }) => (
           <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.to === '/'}
+            key={to}
+            to={to}
+            end={to === '/'}
             className={({ isActive }) =>
               `flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-[10px] font-semibold rounded-xl transition-all ${
                 isActive
@@ -25,8 +26,12 @@ export function BottomNav() {
               }`
             }
           >
-            <span className="text-lg leading-none">{item.icon}</span>
-            <span>{item.label}</span>
+            {({ isActive }) => (
+              <>
+                <Icon size={20} strokeWidth={isActive ? 2 : 1.5} />
+                <span>{label}</span>
+              </>
+            )}
           </NavLink>
         ))}
       </div>

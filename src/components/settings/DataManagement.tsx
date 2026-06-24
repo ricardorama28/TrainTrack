@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { Upload, Download, Trash2 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 import { storage } from '../../lib/storage';
@@ -57,25 +58,25 @@ export function DataManagement({ onDataChange }: DataManagementProps) {
   return (
     <div className="space-y-3">
       <Button variant="secondary" fullWidth onClick={handleExport}>
-        📤 Exportar datos (JSON)
+        <Upload size={15} /> Exportar datos (JSON)
       </Button>
 
       <div>
         <Button variant="secondary" fullWidth onClick={() => fileInputRef.current?.click()}>
-          📥 Importar datos (JSON)
+          <Download size={15} /> Importar datos (JSON)
         </Button>
         <input ref={fileInputRef} type="file" accept=".json,application/json" className="hidden" onChange={handleImportFile} />
         {importError && <p className="text-xs text-red-500 mt-1">{importError}</p>}
       </div>
 
       <Button variant="danger" fullWidth onClick={() => setConfirmClear(true)}>
-        🗑️ Borrar todos los datos
+        <Trash2 size={15} /> Borrar todos los datos
       </Button>
 
       <Modal open={confirmClear} onClose={() => setConfirmClear(false)} title="Borrar todos los datos">
         <div className="space-y-4">
           <p className="text-gray-600 dark:text-gray-300 text-sm">
-            ¿Estás segura de que querés borrar <strong>todos los datos</strong>? Esta acción no se puede deshacer.
+            ¿Estás seguro de que querés borrar <strong>todos los datos</strong>? Esta acción no se puede deshacer.
           </p>
           <p className="text-xs text-gray-400 dark:text-gray-500">
             Se eliminarán todos los entrenamientos registrados, rutinas y ajustes.

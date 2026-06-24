@@ -3,6 +3,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { DataManagement } from '../components/settings/DataManagement';
 import { useAuth } from '../context/AuthContext';
+import { RefreshCw } from 'lucide-react';
 import { getSyncState, onSyncStateChange, pushToCloud, type SyncState } from '../lib/cloudSync';
 import type { Settings } from '../types';
 
@@ -71,7 +72,7 @@ function AccountSection() {
           </div>
           {sync.error && !sync.syncing && (
             <Button variant="secondary" fullWidth onClick={() => void pushToCloud(user.id)}>
-              🔄 Reintentar sincronización
+              <RefreshCw size={15} /> Reintentar sincronización
             </Button>
           )}
           <Button variant="secondary" fullWidth onClick={() => void signOut()}>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Dumbbell } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../context/AuthContext';
 
@@ -48,7 +49,9 @@ export function AuthPage() {
     <div className="min-h-screen flex items-center justify-center px-5 py-10 bg-gray-50 dark:bg-gray-900">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
-          <div className="text-4xl mb-2">💪</div>
+          <div className="flex justify-center mb-3">
+            <Dumbbell size={48} className="text-primary-500" />
+          </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">TrainTrack</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             {mode === 'signin' ? 'Iniciá sesión para sincronizar tus datos' : 'Creá tu cuenta'}
