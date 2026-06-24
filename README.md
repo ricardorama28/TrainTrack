@@ -165,13 +165,30 @@ La **anon key** es pública (puede ir en el frontend); la seguridad la da RLS.
 **En el dashboard de Supabase:**
 1. **Authentication → Providers → Google** → activá (Enable).
 2. Pegá el **Client ID** y **Client Secret** de Google.
-3. **Authentication → URL Configuration → Redirect URLs**, agregá:
-   - `http://localhost:5173` (desarrollo — ajustá si tu puerto difiere)
-   - La URL de producción cuando la despliegues.
-4. Verificá que **Site URL** apunte al origin correcto.
+3. **Authentication → URL Configuration → Site URL** → poné la **URL de producción**
+   (ej. `https://traintrack-xxx.vercel.app`), **sin barra final**. Es el destino al que
+   Supabase manda por defecto: si apunta a `localhost`, el login desde el celular se traba.
+4. **Authentication → URL Configuration → Redirect URLs**, agregá:
+   - La URL de **producción** (la misma del Site URL).
+   - `http://localhost:5173` (desarrollo — ajustá si tu puerto difiere).
+   - (Opcional) `https://*.vercel.app` para que también funcione en *preview deployments*.
 
 > El `redirectTo: window.location.origin` del código debe coincidir con una de las
 > Redirect URLs permitidas.
+
+> ⚠️ **Los preview deployments de Vercel tienen URL cambiante** (una distinta por branch).
+> El OAuth solo funciona de forma confiable en la **URL de producción** estable o en un
+> dominio propio. Probá el login con Google desde la URL de producción.
+
+### Problema: me quedo trabado en `.../auth/v1/callback`
+
+Si al iniciar sesión con Google quedás en una URL tipo
+`https://<proyecto>.supabase.co/auth/v1/callback?...&code=...` y nunca volvés a la app:
+
+- **Causa:** la URL de tu app no está permitida en Supabase, así que cae al **Site URL**
+  por defecto (normalmente `localhost`), que desde el celular no resuelve.
+- **Solución:** configurá **Site URL** y **Redirect URLs** con tu URL de producción
+  (pasos 3 y 4 de arriba). Es config server-side de Supabase: no requiere redeploy.
 
 ---
 
