@@ -5,7 +5,8 @@ import { RoutineCard } from '../components/routines/RoutineCard';
 import { RoutineForm } from '../components/routines/RoutineForm';
 import { ImportRoutine } from '../components/routines/ImportRoutine';
 import { WorkoutSession } from '../components/workout/WorkoutSession';
-import type { Routine, ParsedDay, ExerciseTemplate, Exercise, ExerciseCategory, MuscleGroup, WorkoutLog } from '../types';
+import { storage } from '../lib/storage';
+import type { Routine, ParsedDay, ExerciseTemplate, Exercise, ExerciseCategory, MuscleGroup, WorkoutLog, ActiveSession } from '../types';
 
 function newId(): string {
   return typeof crypto !== 'undefined' && crypto.randomUUID
@@ -38,6 +39,14 @@ export function RoutinesPage({ routines, exercises, onAdd, onUpdate, onDelete, o
   const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [activeRoutine, setActiveRoutine] = useState<Routine | null>(null);
+  const [resumeSession, setResumeSession] = useState<ActiveSession | null>(() => storage.getActiveSession());
+  const [resumeOpen, setResumeOpen] = useState(false);
+
+  function closeSession() {
+    setActiveRoutine(null);
+    setResumeOpen(false);
+    setResumeSession(null);
+  }
 
   function handleSaveRoutine(data: Omit<Routine, 'id' | 'createdAt'>) {
     if (editingRoutine) {
@@ -96,6 +105,23 @@ export function RoutinesPage({ routines, exercises, onAdd, onUpdate, onDelete, o
         </div>
       </div>
 
+      {resumeSession && !resumeOpen && !activeRoutine && (
+        <div className="flex items-center gap-3 rounded-2xl border border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20 px-4 py-3">
+          <span className="text-2xl">🏋️</span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">Entrenamiento en curso</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{resumeSession.routineName}</p>
+          </div>
+          <Button size="sm" onClick={() => setResumeOpen(true)}>Retomar</Button>
+          <button
+            onClick={() => { storage.clearActiveSession(); setResumeSession(null); }}
+            className="text-xs text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 px-1"
+          >
+            Descartar
+          </button>
+        </div>
+      )}
+
       {routines.length === 0 ? (
         <EmptyState
           icon="📋"
@@ -147,14 +173,21 @@ export function RoutinesPage({ routines, exercises, onAdd, onUpdate, onDelete, o
         onImport={handleImport}
       />
 
-      {activeRoutine && (
+      {activeRoutine ? (
         <WorkoutSession
           routine={activeRoutine}
           exercises={exercises}
-          onCancel={() => setActiveRoutine(null)}
-          onFinish={(log) => { onSaveLog(log); setActiveRoutine(null); }}
+          onCancel={closeSession}
+          onFinish={(log) => { onSaveLog(log); closeSession(); }}
         />
-      )}
+      ) : resumeOpen && resumeSession ? (
+        <WorkoutSession
+          resume={resumeSession}
+          exercises={exercises}
+          onCancel={closeSession}
+          onFinish={(log) => { onSaveLog(log); closeSession(); }}
+        />
+      ) : null}
     </div>
   );
 }

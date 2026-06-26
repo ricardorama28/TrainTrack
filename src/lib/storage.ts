@@ -1,4 +1,4 @@
-import type { WorkoutLog, WorkoutType, Routine, Settings, AppData, Exercise } from '../types';
+import type { WorkoutLog, WorkoutType, Routine, Settings, AppData, Exercise, ActiveSession } from '../types';
 
 // ─── Sanitization ──────────────────────────────────────────────────────────────
 // Defensive layer: a single malformed/legacy log (e.g. a missing `date` or
@@ -45,12 +45,16 @@ export function sanitizeWorkoutLogs(raw: unknown): WorkoutLog[] {
 // ─── Storage Keys ─────────────────────────────────────────────────────────────
 
 const KEYS = {
-  WORKOUT_LOGS: 'traintrack_workouts',
-  ROUTINES:     'traintrack_routines',
-  EXERCISES:    'traintrack_exercises',
-  SETTINGS:     'traintrack_settings',
-  INITIALIZED:  'traintrack_initialized',
+  WORKOUT_LOGS:   'traintrack_workouts',
+  ROUTINES:       'traintrack_routines',
+  EXERCISES:      'traintrack_exercises',
+  SETTINGS:       'traintrack_settings',
+  INITIALIZED:    'traintrack_initialized',
+  ACTIVE_SESSION: 'traintrack_active_session',
 } as const;
+
+/** An in-progress session older than this is considered stale and discarded. */
+const ACTIVE_SESSION_TTL_MS = 18 * 60 * 60 * 1000; // 18 h
 
 // ─── Default Values ───────────────────────────────────────────────────────────
 
@@ -124,6 +128,30 @@ export const storage = {
   // Initialization flag
   isInitialized: (): boolean => localStorage.getItem(KEYS.INITIALIZED) === 'true',
   markInitialized: (): void => localStorage.setItem(KEYS.INITIALIZED, 'true'),
+
+  // Active (in-progress) workout session — local & ephemeral, not synced.
+  getActiveSession: (): ActiveSession | null => {
+    const s = get<ActiveSession | null>(KEYS.ACTIVE_SESSION, null);
+    if (!s || typeof s !== 'object' || !Array.isArray(s.session)) return null;
+    // Discard stale sessions so we don't offer to resume an old workout.
+    if (typeof s.savedAt !== 'number' || Date.now() - s.savedAt > ACTIVE_SESSION_TTL_MS) {
+      localStorage.removeItem(KEYS.ACTIVE_SESSION);
+      return null;
+    }
+    return s;
+  },
+  setActiveSession: (s: ActiveSession): void => {
+    // Direct write (no notify): this is high-frequency, local-only state and
+    // must not trigger cloud-sync pushes.
+    try {
+      localStorage.setItem(KEYS.ACTIVE_SESSION, JSON.stringify(s));
+    } catch (e) {
+      console.error('Active session write failed:', e);
+    }
+  },
+  clearActiveSession: (): void => {
+    localStorage.removeItem(KEYS.ACTIVE_SESSION);
+  },
 
   // Export / Import
   exportAll: (): string => {

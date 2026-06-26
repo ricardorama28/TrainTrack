@@ -1,15 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { playBeep, vibrate } from '../../lib/feedback';
 
-interface RestTimerProps {
-  /** Absolute epoch-ms timestamp when the rest finishes. */
-  endsAt: number;
-  /** Total rest duration in seconds (for the progress ring). */
-  total: number;
-  onDone: () => void;
-  onSkip: () => void;
-  /** Adjust the rest by ±seconds (parent owns endsAt so it can persist it). */
-  onAdjust: (deltaSeconds: number) => void;
+interface HoldTimerProps {
+  /** Target hold duration in seconds. */
+  seconds: number;
+  /** Fired when the full hold is completed. */
+  onComplete: (seconds: number) => void;
+  /** Fired when the user stops early; reports the seconds actually held. */
+  onStop: (elapsedSeconds: number) => void;
 }
 
 function remainingFrom(endsAt: number): number {
@@ -17,53 +15,55 @@ function remainingFrom(endsAt: number): number {
 }
 
 /**
- * Timestamp-based rest countdown. Because it derives the remaining time from an
- * absolute `endsAt` (recomputed each tick and whenever the tab regains focus),
- * it stays correct even when the browser throttles or suspends timers while the
- * phone is locked or the app is backgrounded.
+ * Hold (isometric) countdown for time-based exercises like planks. Timestamp-
+ * based like RestTimer so locking the phone mid-hold doesn't desync it. On a
+ * full cycle it reports completion; stopping early records the time held.
  */
-export function RestTimer({ endsAt, total, onDone, onSkip, onAdjust }: RestTimerProps) {
-  const [remaining, setRemaining] = useState(() => remainingFrom(endsAt));
+export function HoldTimer({ seconds, onComplete, onStop }: HoldTimerProps) {
+  const endsAtRef = useRef(Date.now() + seconds * 1000);
+  const [remaining, setRemaining] = useState(() => remainingFrom(endsAtRef.current));
   const finishedRef = useRef(false);
 
   useEffect(() => {
-    finishedRef.current = false;
-
+    const endsAt = endsAtRef.current;
     const tick = () => {
       const r = remainingFrom(endsAt);
       setRemaining(r);
       if (r <= 0 && !finishedRef.current) {
         finishedRef.current = true;
         playBeep();
-        vibrate();
-        setTimeout(onDone, 500);
+        vibrate([300, 120, 300]);
+        setTimeout(() => onComplete(seconds), 400);
       }
     };
-
-    tick(); // recompute immediately (covers remounts / prop changes)
+    tick();
     const id = setInterval(tick, 250);
     const onVisible = () => { if (!document.hidden) tick(); };
     document.addEventListener('visibilitychange', onVisible);
     window.addEventListener('focus', onVisible);
-
     return () => {
       clearInterval(id);
       document.removeEventListener('visibilitychange', onVisible);
       window.removeEventListener('focus', onVisible);
     };
-  }, [endsAt, onDone]);
+  }, [seconds, onComplete]);
+
+  function handleStop() {
+    if (finishedRef.current) return;
+    finishedRef.current = true;
+    onStop(Math.max(0, seconds - remaining));
+  }
 
   const mins = Math.floor(remaining / 60);
   const secs = remaining % 60;
-  const pct = total > 0 ? Math.min(1, remaining / total) : 0;
+  const pct = seconds > 0 ? Math.min(1, remaining / seconds) : 0;
 
-  // SVG progress ring
   const R = 52;
   const C = 2 * Math.PI * R;
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-gray-950/98 backdrop-blur-md p-6">
-      <p className="text-gray-500 text-xs uppercase tracking-[0.2em] font-semibold mb-8">Descanso</p>
+      <p className="text-amber-400 text-xs uppercase tracking-[0.2em] font-semibold mb-8">Aguantá</p>
 
       <div className="relative w-56 h-56 mb-10">
         <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
@@ -73,7 +73,7 @@ export function RestTimer({ endsAt, total, onDone, onSkip, onAdjust }: RestTimer
             cy="60"
             r={R}
             fill="none"
-            stroke="#22c55e"
+            stroke="#f59e0b"
             strokeWidth="10"
             strokeLinecap="round"
             strokeDasharray={C}
@@ -89,26 +89,11 @@ export function RestTimer({ endsAt, total, onDone, onSkip, onAdjust }: RestTimer
         </div>
       </div>
 
-      <div className="flex items-center gap-3 mb-8">
-        <button
-          onClick={() => onAdjust(-30)}
-          className="px-5 py-3 rounded-xl bg-white/8 text-gray-300 text-sm font-semibold hover:bg-white/15 active:scale-95 transition border border-white/10"
-        >
-          −30s
-        </button>
-        <button
-          onClick={() => onAdjust(30)}
-          className="px-5 py-3 rounded-xl bg-white/8 text-gray-300 text-sm font-semibold hover:bg-white/15 active:scale-95 transition border border-white/10"
-        >
-          +30s
-        </button>
-      </div>
-
       <button
-        onClick={onSkip}
-        className="w-full max-w-xs py-3.5 rounded-2xl bg-primary-500 hover:bg-primary-600 text-white font-semibold text-base active:scale-95 transition shadow-lg shadow-primary-500/25"
+        onClick={handleStop}
+        className="w-full max-w-xs py-3.5 rounded-2xl bg-white/10 hover:bg-white/15 text-white font-semibold text-base active:scale-95 transition border border-white/10"
       >
-        Saltar descanso →
+        Detener
       </button>
     </div>
   );

@@ -78,6 +78,7 @@ export interface ExerciseTemplate {
   name: string;
   sets?: number;
   reps?: string;          // "10", "30 segundos", "al fallo"
+  unit?: 'reps' | 'seconds'; // how each set is measured (default 'reps')
   weight?: number;        // kg
   restSeconds?: number;
   notes?: string;
@@ -94,6 +95,7 @@ export interface Routine {
   description?: string;
   type: 'workout' | 'active-rest';
   suggestedDays?: number[];   // 0=Dom, 1=Lun, ..., 6=Sab
+  setOrder?: 'sequential' | 'circuit'; // how the guided session walks sets (default 'sequential')
   exercises: ExerciseTemplate[];
   createdAt: string;
 }
@@ -102,6 +104,7 @@ export interface Routine {
 
 export interface SetLog {
   reps?: number;
+  seconds?: number;       // for time-based (isometric) sets; reps stays undefined
   weight?: number;
   completed: boolean;
   notes?: string;
@@ -124,6 +127,44 @@ export interface WorkoutLog {
   feeling?: FeelingType;
   notes?: string;
   exercises: ExerciseLog[];
+}
+
+// ─── Active workout session (in-progress, persisted to survive reloads) ──────
+
+export interface SessionSet {
+  weight?: number;
+  reps?: number;
+  seconds?: number;       // recorded hold time for time-based sets
+  completed: boolean;
+}
+
+export interface SessionExercise {
+  exerciseId?: string;
+  name: string;
+  muscleGroup?: MuscleGroup;
+  unit: 'reps' | 'seconds';
+  targetReps?: string;
+  targetWeight?: number;
+  targetSeconds?: number; // goal hold time for time-based exercises
+  restSeconds?: number;
+  notes?: string;
+  description?: string;
+  primaryMuscles?: string[];
+  referenceUrl?: string;
+  sets: SessionSet[];
+}
+
+export interface ActiveSession {
+  routineId?: string;
+  routineName: string;
+  type: 'workout' | 'active-rest';
+  setOrder: 'sequential' | 'circuit';
+  startedAt: number;          // epoch ms
+  session: SessionExercise[];
+  currentStep: number;
+  restEndsAt?: number;        // epoch ms when the running rest finishes
+  restTotal?: number;         // total seconds of the running rest (for the ring)
+  savedAt: number;            // epoch ms of last persist (for expiry)
 }
 
 // ─── Settings ────────────────────────────────────────────────────────────────

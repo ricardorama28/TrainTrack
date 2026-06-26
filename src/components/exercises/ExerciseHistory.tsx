@@ -11,8 +11,17 @@ interface ExerciseHistoryProps {
 
 interface HistoryEntry {
   date: string;
-  sets: { reps?: number; weight?: number; completed: boolean }[];
+  sets: { reps?: number; seconds?: number; weight?: number; completed: boolean }[];
   notes?: string;
+}
+
+/** Build the label for a set badge: reps, time, and/or weight. */
+function setLabel(set: { reps?: number; seconds?: number; weight?: number }): string {
+  const parts: string[] = [];
+  if (set.seconds != null) parts.push(`${set.seconds} s`);
+  else if (set.reps != null) parts.push(`${set.reps} reps`);
+  if (set.weight != null) parts.push(`${set.weight} kg`);
+  return parts.join(' · ') || '—';
 }
 
 export function ExerciseHistory({ exerciseName, logs, onClose }: ExerciseHistoryProps) {
@@ -55,8 +64,7 @@ export function ExerciseHistory({ exerciseName, logs, onClose }: ExerciseHistory
                 <div className="flex flex-wrap gap-1.5">
                   {entry.sets.map((set, j) => (
                     <Badge key={j} variant={set.completed ? 'green' : 'gray'}>
-                      {set.reps && `${set.reps} reps`}
-                      {set.weight && ` · ${set.weight} kg`}
+                      {setLabel(set)}
                     </Badge>
                   ))}
                 </div>

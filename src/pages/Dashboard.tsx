@@ -9,6 +9,7 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { calculateCurrentStreak, calculateBestStreak } from '../lib/streaks';
 import { formatDateLong, relativeDate, todayStr } from '../lib/dates';
+import { storage } from '../lib/storage';
 import { useAuth } from '../context/AuthContext';
 import type { WorkoutLog, Routine, Settings } from '../types';
 
@@ -39,6 +40,7 @@ export function Dashboard({ logs, routines, settings }: DashboardProps) {
   );
 
   const todayLog = logs.find(l => l.date === todayStr());
+  const activeSession = storage.getActiveSession();
 
   const firstName = user?.user_metadata?.full_name?.split(' ')[0]
                  ?? user?.email?.split('@')[0]
@@ -60,6 +62,20 @@ export function Dashboard({ logs, routines, settings }: DashboardProps) {
           </Button>
         )}
       </div>
+
+      {activeSession && (
+        <button
+          onClick={() => navigate('/routines')}
+          className="w-full flex items-center gap-3 rounded-2xl border border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20 px-4 py-3 text-left active:scale-[0.99] transition"
+        >
+          <span className="text-2xl">🏋️</span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">Entrenamiento en curso</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{activeSession.routineName}</p>
+          </div>
+          <span className="text-sm font-semibold text-primary-600 dark:text-primary-400">Continuar →</span>
+        </button>
+      )}
 
       <MotivationalQuote />
 

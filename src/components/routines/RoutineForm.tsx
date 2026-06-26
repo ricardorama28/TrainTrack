@@ -24,6 +24,7 @@ export function RoutineForm({ open, routine, onClose, onSave }: RoutineFormProps
   const [name, setName] = useState(routine?.name ?? '');
   const [description, setDescription] = useState(routine?.description ?? '');
   const [type, setType] = useState<'workout' | 'active-rest'>(routine?.type ?? 'workout');
+  const [setOrder, setSetOrder] = useState<'sequential' | 'circuit'>(routine?.setOrder ?? 'sequential');
   const [suggestedDays, setSuggestedDays] = useState<number[]>(routine?.suggestedDays ?? []);
   const [exercises, setExercises] = useState<ExerciseTemplate[]>(routine?.exercises ?? []);
   const [exerciseFormOpen, setExerciseFormOpen] = useState(false);
@@ -50,7 +51,7 @@ export function RoutineForm({ open, routine, onClose, onSave }: RoutineFormProps
 
   function handleSave() {
     if (!name.trim()) return;
-    onSave({ name: name.trim(), description: description || undefined, type, suggestedDays, exercises });
+    onSave({ name: name.trim(), description: description || undefined, type, setOrder, suggestedDays, exercises });
     onClose();
   }
 
@@ -85,6 +86,30 @@ export function RoutineForm({ open, routine, onClose, onSave }: RoutineFormProps
                 </button>
               ))}
             </div>
+          </div>
+
+          <div>
+            <label className="label">Orden de series (en la sesión guiada)</label>
+            <div className="flex gap-3">
+              {([['sequential', '↓ Series seguidas'], ['circuit', '⟳ Circuito']] as const).map(([val, label]) => (
+                <button
+                  key={val}
+                  onClick={() => setSetOrder(val)}
+                  className={`flex-1 py-2.5 px-3 rounded-xl border-2 text-sm font-medium transition-all ${
+                    setOrder === val
+                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                      : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              {setOrder === 'sequential'
+                ? 'Todas las series de un ejercicio antes de pasar al siguiente.'
+                : '1ª serie de cada ejercicio, luego la 2ª de cada uno, etc.'}
+            </p>
           </div>
 
           <div>

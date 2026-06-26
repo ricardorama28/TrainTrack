@@ -26,6 +26,7 @@ interface ExerciseFormProps {
 export function ExerciseForm({ open, exercise, onClose, onSave }: ExerciseFormProps) {
   const [name, setName] = useState(exercise?.name ?? '');
   const [sets, setSets] = useState<number | ''>(exercise?.sets ?? '');
+  const [unit, setUnit] = useState<'reps' | 'seconds'>(exercise?.unit ?? 'reps');
   const [reps, setReps] = useState(exercise?.reps ?? '');
   const [weight, setWeight] = useState<number | ''>(exercise?.weight ?? '');
   const [restSeconds, setRestSeconds] = useState<number | ''>(exercise?.restSeconds ?? '');
@@ -39,6 +40,7 @@ export function ExerciseForm({ open, exercise, onClose, onSave }: ExerciseFormPr
     onSave({
       name: name.trim(),
       sets: sets !== '' ? Number(sets) : undefined,
+      unit,
       reps: reps || undefined,
       weight: weight !== '' ? Number(weight) : undefined,
       restSeconds: restSeconds !== '' ? Number(restSeconds) : undefined,
@@ -65,14 +67,33 @@ export function ExerciseForm({ open, exercise, onClose, onSave }: ExerciseFormPr
           />
         </div>
 
+        <div>
+          <label className="label">Medición</label>
+          <div className="flex gap-3">
+            {([['reps', '🔢 Repeticiones'], ['seconds', '⏱ Tiempo']] as const).map(([val, label]) => (
+              <button
+                key={val}
+                onClick={() => setUnit(val)}
+                className={`flex-1 py-2 px-3 rounded-xl border-2 text-sm font-medium transition-all ${
+                  unit === val
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                    : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="grid grid-cols-3 gap-3">
           <div>
             <label className="label">Series</label>
             <input type="number" min="1" value={sets} onChange={e => setSets(e.target.value === '' ? '' : Number(e.target.value))} placeholder="4" className="input" />
           </div>
           <div>
-            <label className="label">Reps</label>
-            <input type="text" value={reps} onChange={e => setReps(e.target.value)} placeholder="10" className="input" />
+            <label className="label">{unit === 'seconds' ? 'Segundos' : 'Reps'}</label>
+            <input type="text" value={reps} onChange={e => setReps(e.target.value)} placeholder={unit === 'seconds' ? '30' : '10'} className="input" />
           </div>
           <div>
             <label className="label">Peso (kg)</label>
