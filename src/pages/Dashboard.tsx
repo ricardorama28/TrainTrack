@@ -4,18 +4,23 @@ import { StreakCard } from '../components/dashboard/StreakCard';
 import { WeeklySummary } from '../components/dashboard/WeeklySummary';
 import { MotivationalQuote } from '../components/dashboard/MotivationalQuote';
 import { UpcomingDays } from '../components/dashboard/UpcomingDays';
+import { NextWorkoutCard } from '../components/dashboard/NextWorkoutCard';
+import { ProgressHighlights } from '../components/dashboard/ProgressHighlights';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { calculateCurrentStreak, calculateBestStreak } from '../lib/streaks';
+import { weeklyMuscleVolume } from '../lib/volume';
+import { MUSCLE_LABELS } from '../lib/labels';
 import { formatDateLong, relativeDate, todayStr } from '../lib/dates';
 import { storage } from '../lib/storage';
 import { useAuth } from '../context/AuthContext';
-import type { WorkoutLog, Routine, Settings } from '../types';
+import type { WorkoutLog, Routine, Settings, Exercise } from '../types';
 
 interface DashboardProps {
   logs: WorkoutLog[];
   routines: Routine[];
+  exercises: Exercise[];
   settings: Settings;
 }
 
@@ -26,11 +31,12 @@ const FEELING_LABELS: Record<string, string> = {
   'very-hard': '🥵 Muy difícil',
 };
 
-export function Dashboard({ logs, routines, settings }: DashboardProps) {
+export function Dashboard({ logs, routines, exercises, settings }: DashboardProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const currentStreak = useMemo(() => calculateCurrentStreak(logs, settings), [logs, settings]);
   const bestStreak = useMemo(() => calculateBestStreak(logs, settings), [logs, settings]);
+  const weekMuscles = useMemo(() => weeklyMuscleVolume(logs, exercises).slice(0, 6), [logs, exercises]);
 
   const lastWorkout = useMemo(() =>
     [...logs]
@@ -77,11 +83,34 @@ export function Dashboard({ logs, routines, settings }: DashboardProps) {
         </button>
       )}
 
-      <MotivationalQuote />
+      {/* 1 · PRÓXIMO ENTRENAMIENTO — la respuesta a "¿qué hago hoy?" */}
+      <NextWorkoutCard logs={logs} routines={routines} settings={settings} />
 
+      {/* 2 · PROGRESO — PRs, mejoras y estancamiento */}
+      <ProgressHighlights logs={logs} exercises={exercises} settings={settings} />
+
+      {/* 3 · ESTA SEMANA — adherencia y distribución */}
       <StreakCard currentStreak={currentStreak} bestStreak={bestStreak} />
 
       <WeeklySummary logs={logs} settings={settings} />
+
+      {weekMuscles.length > 0 && (
+        <Card>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-primary-500">Series de trabajo · esta semana</p>
+            <button onClick={() => navigate('/progreso')} className="text-xs font-semibold text-primary-600 dark:text-primary-400">Ver más →</button>
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            {weekMuscles.map(m => (
+              <span key={m.muscleGroup} className="text-sm text-gray-700 dark:text-gray-200">
+                {MUSCLE_LABELS[m.muscleGroup]} <span className="font-bold text-gray-900 dark:text-white">{m.sets}</span>
+              </span>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      <MotivationalQuote />
 
       {/* Last workout */}
       {lastWorkout && (

@@ -5,9 +5,10 @@ import { RestTimer } from './RestTimer';
 import { HoldTimer } from './HoldTimer';
 import { todayStr } from '../../lib/dates';
 import { storage } from '../../lib/storage';
+import { MUSCLE_LABELS } from '../../lib/labels';
+import { buildSessionExercises, buildWorkoutLog, lastWorkingSetIndex } from '../../lib/session';
 import type {
-  Routine, WorkoutLog, FeelingType, MuscleGroup, SetLog, ExerciseLog, Exercise,
-  ExerciseTemplate, SessionSet, SessionExercise, ActiveSession,
+  Routine, WorkoutLog, FeelingType, SessionSet, SessionExercise, ActiveSession, Exercise,
 } from '../../types';
 
 interface WorkoutSessionProps {
@@ -16,6 +17,8 @@ interface WorkoutSessionProps {
   /** An in-progress session to restore. */
   resume?: ActiveSession;
   exercises?: Exercise[];
+  /** Full workout history, used to compute each exercise's "objetivo de hoy". */
+  logs?: WorkoutLog[];
   defaultRestSeconds?: number;
   onFinish: (log: Omit<WorkoutLog, 'id'>) => void;
   onCancel: () => void;
@@ -32,72 +35,12 @@ function ytSearchUrl(name: string): string {
   return `https://www.youtube.com/results?search_query=${encodeURIComponent(name + ' ejercicio técnica')}`;
 }
 
-const MUSCLE_LABELS: Record<MuscleGroup, string> = {
-  glutes: 'Glúteos', legs: 'Piernas', back: 'Espalda', chest: 'Pecho',
-  shoulders: 'Hombros', arms: 'Brazos', core: 'Core', 'full-body': 'Full Body',
-  mobility: 'Movilidad', other: 'Otro',
-};
-
 const FEELINGS: { value: FeelingType; label: string; icon: string }[] = [
   { value: 'easy', label: 'Fácil', icon: '😊' },
   { value: 'normal', label: 'Normal', icon: '😐' },
   { value: 'hard', label: 'Difícil', icon: '😤' },
   { value: 'very-hard', label: 'Muy difícil', icon: '🥵' },
 ];
-
-/** Extract a leading integer from a reps string ("10-12" → 10, "30 seg" → 30) */
-function parseRepsNumber(reps?: string): number | undefined {
-  if (!reps) return undefined;
-  const m = /\d+/.exec(reps);
-  return m ? parseInt(m[0]) : undefined;
-}
-
-/** Whether an exercise is measured by time rather than reps. */
-function isTimeBased(ex: ExerciseTemplate): boolean {
-  if (ex.unit) return ex.unit === 'seconds';
-  return /seg|segundo|min|'|"/i.test(ex.reps ?? ''); // legacy detection
-}
-
-/** Parse a duration string into seconds ("30 seg" → 30, "1 min" → 60). */
-function parseDuration(reps?: string): number | undefined {
-  if (!reps) return undefined;
-  const m = /(\d+)\s*(min|m|seg|segundos?|s|')?/i.exec(reps);
-  if (!m) return undefined;
-  const n = parseInt(m[1]);
-  const unit = (m[2] ?? '').toLowerCase();
-  if (unit === 'min' || unit === 'm' || unit === "'") return n * 60;
-  return n;
-}
-
-function buildSession(routine: Routine, exercises?: Exercise[]): SessionExercise[] {
-  return routine.exercises.map(ex => {
-    const lib = ex.exerciseId ? exercises?.find(e => e.id === ex.exerciseId) : undefined;
-    const count = ex.sets && ex.sets > 0 ? ex.sets : 1;
-    const timeBased = isTimeBased(ex);
-    const repsNum = timeBased ? undefined : parseRepsNumber(ex.reps);
-    const targetSeconds = timeBased ? (parseDuration(ex.reps) ?? 30) : undefined;
-    return {
-      exerciseId: ex.exerciseId,
-      name: ex.name,
-      muscleGroup: ex.muscleGroup ?? lib?.muscleGroup,
-      unit: timeBased ? 'seconds' : 'reps',
-      targetReps: ex.reps,
-      targetWeight: ex.weight,
-      targetSeconds,
-      restSeconds: ex.restSeconds,
-      notes: ex.notes ?? lib?.technicalNotes,
-      description: lib?.description,
-      primaryMuscles: lib?.primaryMuscles,
-      referenceUrl: ex.videoUrl ?? lib?.referenceUrl ?? lib?.videoUrl,
-      sets: Array.from({ length: count }, () => ({
-        weight: ex.weight,
-        reps: repsNum,
-        seconds: undefined,
-        completed: false,
-      })),
-    };
-  });
-}
 
 /** Flatten the session into an ordered list of (exercise, set) steps. */
 function buildSteps(session: SessionExercise[], setOrder: 'sequential' | 'circuit'): Step[] {
@@ -122,7 +65,7 @@ function formatElapsed(ms: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-export function WorkoutSession({ routine, resume, exercises, defaultRestSeconds = 60, onFinish, onCancel }: WorkoutSessionProps) {
+export function WorkoutSession({ routine, resume, exercises, logs = [], defaultRestSeconds = 60, onFinish, onCancel }: WorkoutSessionProps) {
   const init = resume ?? null;
 
   const routineId = init?.routineId ?? routine?.id;
@@ -130,8 +73,10 @@ export function WorkoutSession({ routine, resume, exercises, defaultRestSeconds 
   const routineType: 'workout' | 'active-rest' =
     init?.type ?? (routine?.type === 'active-rest' ? 'active-rest' : 'workout');
 
+  // A resumed session keeps its persisted state (incl. its plannedTarget snapshot);
+  // a fresh session computes each exercise's "objetivo de hoy" from history.
   const [session, setSession] = useState<SessionExercise[]>(
-    () => init?.session ?? buildSession(routine!, exercises),
+    () => init?.session ?? buildSessionExercises(routine!, exercises, logs, storage.getSettings()),
   );
   const [setOrder, setSetOrder] = useState<'sequential' | 'circuit'>(
     () => init?.setOrder ?? routine?.setOrder ?? 'sequential',
@@ -262,7 +207,7 @@ export function WorkoutSession({ routine, resume, exercises, defaultRestSeconds 
     setSession(prev =>
       prev.map((e, i) =>
         i === exIdx
-          ? { ...e, sets: [...e.sets, { weight: last?.weight, reps: last?.reps, seconds: undefined, completed: false }] }
+          ? { ...e, sets: [...e.sets, { weight: last?.weight, reps: last?.reps, seconds: undefined, completed: false, type: 'working', rir: undefined }] }
           : e,
       ),
     );
@@ -275,18 +220,7 @@ export function WorkoutSession({ routine, resume, exercises, defaultRestSeconds 
   }
 
   function buildLog(): Omit<WorkoutLog, 'id'> {
-    const exercises: ExerciseLog[] = session.map(e => ({
-      exerciseId: e.exerciseId ?? '',
-      exerciseName: e.name,
-      sets: e.sets.map((s): SetLog => ({
-        reps: e.unit === 'seconds' ? undefined : s.reps,
-        seconds: e.unit === 'seconds' ? s.seconds : undefined,
-        weight: s.weight,
-        completed: s.completed,
-      })),
-      notes: e.notes,
-    }));
-    return {
+    return buildWorkoutLog(session, {
       date: todayStr(),
       type: routineType,
       routineId,
@@ -294,8 +228,7 @@ export function WorkoutSession({ routine, resume, exercises, defaultRestSeconds 
       duration: Math.max(1, Math.round((Date.now() - startedAt) / 60000)),
       feeling: feeling || undefined,
       notes: notes || undefined,
-      exercises,
-    };
+    });
   }
 
   function handleFinish() {
@@ -467,6 +400,32 @@ export function WorkoutSession({ routine, resume, exercises, defaultRestSeconds 
               )}
             </div>
 
+            {/* Objetivo de hoy (progression suggestion) */}
+            {ex.plannedTarget && ex.plannedTarget.action !== 'repeat' && (
+              <div className="rounded-2xl border border-primary-500/40 bg-primary-500/8 px-4 py-3 space-y-1">
+                <p className="text-sm font-bold text-primary-300">
+                  🎯 Objetivo de hoy:{' '}
+                  {ex.plannedTarget.targetWeight != null && <span>{ex.plannedTarget.targetWeight} kg</span>}
+                  {ex.plannedTarget.targetReps && ex.plannedTarget.targetReps.length > 0 && (
+                    <span> · ref {ex.plannedTarget.targetReps.join('/')}</span>
+                  )}
+                  {ex.plannedTarget.targetTotalReps != null && (
+                    <span> · ≥{ex.plannedTarget.targetTotalReps} reps</span>
+                  )}
+                  {ex.plannedTarget.rir != null && ex.plannedTarget.action !== 'increase-weight' && (
+                    <span> @ RIR≥{ex.plannedTarget.rir}</span>
+                  )}
+                </p>
+                <p className="text-xs text-gray-400">{ex.plannedTarget.reason}</p>
+                {ex.progressionNotes && (
+                  <p className="text-xs text-amber-300/90">📌 {ex.progressionNotes}</p>
+                )}
+                {ex.plannedTarget.confidence !== 'high' && (
+                  <p className="text-[11px] text-gray-500">Estimación con menos datos (sin RIR histórico).</p>
+                )}
+              </div>
+            )}
+
             {/* Sets */}
             <div className="space-y-2">
               <div className="grid grid-cols-[2rem_1fr_1fr_2.5rem] gap-2 px-1 text-[11px] font-bold text-gray-500 uppercase tracking-widest">
@@ -477,59 +436,88 @@ export function WorkoutSession({ routine, resume, exercises, defaultRestSeconds 
               </div>
               {ex.sets.map((set, i) => {
                 const isActive = i === activeSetIdx;
+                const isWarmup = set.type === 'warmup';
+                const showRir = !timeBased && !isWarmup && i === lastWorkingSetIndex(ex.sets);
                 return (
-                  <div
-                    key={i}
-                    className={`grid grid-cols-[2rem_1fr_1fr_2.5rem] gap-2 items-center rounded-2xl p-2.5 border-2 transition-all ${
-                      set.completed
-                        ? 'border-primary-500/60 bg-primary-500/8'
-                        : isActive
-                          ? 'border-accent-500/70 bg-accent-500/8 ring-1 ring-accent-500/40'
-                          : 'border-gray-700 bg-gray-800/50'
-                    }`}
-                  >
-                    <span className={`text-center text-sm font-bold ${set.completed ? 'text-primary-400' : isActive ? 'text-accent-400' : 'text-gray-400'}`}>{i + 1}</span>
-                    <input
-                      type="number"
-                      step="0.5"
-                      inputMode="decimal"
-                      value={set.weight ?? ''}
-                      onChange={e => updateSet(exIdx, i, { weight: e.target.value ? Number(e.target.value) : undefined })}
-                      placeholder="—"
-                      className="w-full px-2 py-2 rounded-xl border border-gray-700 bg-gray-900 text-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder:text-gray-600"
-                    />
-                    {timeBased ? (
+                  <div key={i} className="space-y-1.5">
+                    <div
+                      className={`grid grid-cols-[2rem_1fr_1fr_2.5rem] gap-2 items-center rounded-2xl p-2.5 border-2 transition-all ${
+                        isWarmup ? 'opacity-60 ' : ''
+                      }${
+                        set.completed
+                          ? 'border-primary-500/60 bg-primary-500/8'
+                          : isActive
+                            ? 'border-accent-500/70 bg-accent-500/8 ring-1 ring-accent-500/40'
+                            : 'border-gray-700 bg-gray-800/50'
+                      }`}
+                    >
+                      <div className="flex flex-col items-center gap-0.5">
+                        <span className={`text-sm font-bold ${set.completed ? 'text-primary-400' : isActive ? 'text-accent-400' : 'text-gray-400'}`}>{i + 1}</span>
+                        <button
+                          onClick={() => updateSet(exIdx, i, { type: isWarmup ? 'working' : 'warmup', rir: isWarmup ? set.rir : undefined })}
+                          className={`text-[10px] font-bold leading-none px-1 py-0.5 rounded ${isWarmup ? 'bg-amber-500/80 text-white' : 'text-gray-600 hover:text-gray-300'}`}
+                          title={isWarmup ? 'Serie de calentamiento' : 'Marcar como calentamiento'}
+                        >
+                          C
+                        </button>
+                      </div>
                       <input
                         type="number"
-                        inputMode="numeric"
-                        value={set.seconds ?? ''}
-                        onChange={e => updateSet(exIdx, i, { seconds: e.target.value ? Number(e.target.value) : undefined })}
-                        placeholder={ex.targetSeconds ? String(ex.targetSeconds) : '—'}
-                        className="w-full px-2 py-2 rounded-xl border border-gray-700 bg-gray-900 text-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder:text-gray-600"
-                      />
-                    ) : (
-                      <input
-                        type="number"
-                        inputMode="numeric"
-                        value={set.reps ?? ''}
-                        onChange={e => updateSet(exIdx, i, { reps: e.target.value ? Number(e.target.value) : undefined })}
+                        step="0.5"
+                        inputMode="decimal"
+                        value={set.weight ?? ''}
+                        onChange={e => updateSet(exIdx, i, { weight: e.target.value ? Number(e.target.value) : undefined })}
                         placeholder="—"
                         className="w-full px-2 py-2 rounded-xl border border-gray-700 bg-gray-900 text-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder:text-gray-600"
                       />
-                    )}
-                    <div className="flex items-center justify-center">
-                      <button
-                        onClick={() => toggleSet(i)}
-                        className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold transition active:scale-90 ${
-                          set.completed
-                            ? 'bg-primary-500 text-white shadow-md shadow-primary-500/30'
-                            : 'bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-white'
-                        }`}
-                        title={set.completed ? 'Marcar como pendiente' : 'Completar serie'}
-                      >
-                        ✓
-                      </button>
+                      {timeBased ? (
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          value={set.seconds ?? ''}
+                          onChange={e => updateSet(exIdx, i, { seconds: e.target.value ? Number(e.target.value) : undefined })}
+                          placeholder={ex.targetSeconds ? String(ex.targetSeconds) : '—'}
+                          className="w-full px-2 py-2 rounded-xl border border-gray-700 bg-gray-900 text-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder:text-gray-600"
+                        />
+                      ) : (
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          value={set.reps ?? ''}
+                          onChange={e => updateSet(exIdx, i, { reps: e.target.value ? Number(e.target.value) : undefined })}
+                          placeholder="—"
+                          className="w-full px-2 py-2 rounded-xl border border-gray-700 bg-gray-900 text-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder:text-gray-600"
+                        />
+                      )}
+                      <div className="flex items-center justify-center">
+                        <button
+                          onClick={() => toggleSet(i)}
+                          className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold transition active:scale-90 ${
+                            set.completed
+                              ? 'bg-primary-500 text-white shadow-md shadow-primary-500/30'
+                              : 'bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-white'
+                          }`}
+                          title={set.completed ? 'Marcar como pendiente' : 'Completar serie'}
+                        >
+                          ✓
+                        </button>
+                      </div>
                     </div>
+                    {showRir && (
+                      <div className="flex items-center gap-2 pl-2 text-xs text-gray-400">
+                        <span className="font-semibold">RIR última serie</span>
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          min="0"
+                          value={set.rir ?? ''}
+                          onChange={e => updateSet(exIdx, i, { rir: e.target.value ? Number(e.target.value) : undefined })}
+                          placeholder="—"
+                          className="w-16 px-2 py-1 rounded-lg border border-gray-700 bg-gray-900 text-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder:text-gray-600"
+                        />
+                        <span className="text-gray-600">reps en reserva</span>
+                      </div>
+                    )}
                   </div>
                 );
               })}

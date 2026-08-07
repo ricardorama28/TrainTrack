@@ -65,6 +65,8 @@ export const defaultSettings: Settings = {
   darkMode: true,
   autoEnrich: true,       // enrich from local KB by default (no network needed)
   externalSearch: false,  // external search is opt-in (requires backend)
+  defaultWeightIncrement: 2.5,
+  stalledSessionThreshold: 3,
 };
 
 // ─── Generic Helpers ─────────────────────────────────────────────────────────
@@ -160,7 +162,7 @@ export const storage = {
       routines:    storage.getRoutines(),
       exercises:   storage.getExercises(),
       settings:    storage.getSettings(),
-      version:     '1.1',
+      version:     '1.2',
     };
     return JSON.stringify(data, null, 2);
   },
