@@ -1,28 +1,16 @@
 import { useState, useCallback } from 'react';
 import { storage } from '../lib/storage';
 import { enrichExerciseFromKnowledgeBase } from '../lib/enrichExercise';
+import { normalizeName } from '../lib/normalize';
 import type { Exercise } from '../types';
+
+// Re-exported for existing importers (e.g. ExercisesPage). Source lives in lib/normalize.
+export { normalizeName };
 
 function newId(): string {
   return typeof crypto !== 'undefined' && crypto.randomUUID
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
-
-// Unicode range for combining diacritical marks (accents).
-const COMBINING_MARKS = /[̀-ͯ]/g;
-
-/**
- * Normalises a name for comparison: lowercase, trimmed, collapsed spaces,
- * accents removed. Used to dedup "Hip Thrust" vs "hip thrust" vs "Hip  Thrust".
- */
-export function normalizeName(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(COMBINING_MARKS, '')
-    .replace(/\s+/g, ' ')
-    .trim();
 }
 
 export function useExercises() {

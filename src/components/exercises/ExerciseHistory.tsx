@@ -1,7 +1,13 @@
+import { useMemo } from 'react';
 import { Modal } from '../ui/Modal';
 import { Badge } from '../ui/Badge';
 import { formatDateShort } from '../../lib/dates';
-import type { WorkoutLog } from '../../types';
+import { storage } from '../../lib/storage';
+import { ExerciseProgressChart } from '../charts/ExerciseProgressChart';
+import {
+  getExercisePerformances, computePRs, detectTrend, detectStalled, getCurrentLoadBlock,
+} from '../../lib/analytics';
+import type { WorkoutLog, Trend } from '../../types';
 
 interface ExerciseHistoryProps {
   exerciseName: string;
@@ -24,6 +30,12 @@ function setLabel(set: { reps?: number; seconds?: number; weight?: number }): st
   return parts.join(' · ') || '—';
 }
 
+const TREND_META: Record<Trend, { icon: string; label: string; variant: 'green' | 'gray' | 'red' }> = {
+  up: { icon: '↑', label: 'Progresando', variant: 'green' },
+  flat: { icon: '→', label: 'Estable', variant: 'gray' },
+  down: { icon: '↓', label: 'Bajando', variant: 'red' },
+};
+
 export function ExerciseHistory({ exerciseName, logs, onClose }: ExerciseHistoryProps) {
   // Find all logs that contain this exercise
   const entries: HistoryEntry[] = logs
@@ -37,6 +49,18 @@ export function ExerciseHistory({ exerciseName, logs, onClose }: ExerciseHistory
 
   const lastWeight = entries.flatMap(e => e.sets).find(s => s.weight != null)?.weight;
 
+  const analysis = useMemo(() => {
+    const perfs = getExercisePerformances(logs, undefined, exerciseName);
+    if (perfs.length === 0) return null;
+    const prs = computePRs(perfs);
+    const trend = detectTrend(perfs);
+    const currentWeight = perfs[perfs.length - 1].topWeight;
+    const block = getCurrentLoadBlock(perfs, currentWeight);
+    const threshold = storage.getSettings().stalledSessionThreshold ?? 3;
+    const stalled = detectStalled(block, threshold);
+    return { perfs, prs, trend, stalled };
+  }, [logs, exerciseName]);
+
   return (
     <Modal open={true} onClose={onClose} title={exerciseName}>
       <div className="space-y-4">
@@ -47,6 +71,41 @@ export function ExerciseHistory({ exerciseName, logs, onClose }: ExerciseHistory
               <p className="text-xs text-gray-500 dark:text-gray-400">Último peso registrado</p>
               <p className="text-xl font-bold text-primary-600 dark:text-primary-400">{lastWeight} kg</p>
             </div>
+          </div>
+        )}
+
+        {analysis && (
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              <Badge variant={TREND_META[analysis.trend].variant}>
+                {TREND_META[analysis.trend].icon} {TREND_META[analysis.trend].label}
+              </Badge>
+              {analysis.stalled.stalled && (
+                <Badge variant="red">
+                  ⚠️ {analysis.stalled.reason === 'ceiling-failure'
+                    ? `${analysis.stalled.sessionsWithoutProgress} sesiones al techo sin reserva`
+                    : `Sin progreso hace ${analysis.stalled.sessionsWithoutProgress} sesiones`}
+                </Badge>
+              )}
+            </div>
+
+            {(analysis.prs.maxWeight || analysis.prs.maxTotalRepsAtWeight) && (
+              <div className="flex flex-wrap gap-2 text-xs">
+                {analysis.prs.maxWeight && (
+                  <span className="rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 px-2 py-1 font-semibold">
+                    🏆 Carga máx {analysis.prs.maxWeight.value} kg
+                  </span>
+                )}
+                {analysis.prs.maxTotalRepsAtWeight && (
+                  <span className="rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 px-2 py-1 font-semibold">
+                    🏆 {analysis.prs.maxTotalRepsAtWeight.value} reps
+                    {analysis.prs.maxTotalRepsAtWeight.weight ? ` @ ${analysis.prs.maxTotalRepsAtWeight.weight} kg` : ''}
+                  </span>
+                )}
+              </div>
+            )}
+
+            <ExerciseProgressChart performances={analysis.perfs} />
           </div>
         )}
 

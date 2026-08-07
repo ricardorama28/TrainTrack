@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Calendar, ClipboardList, Dumbbell, Settings2 } from 'lucide-react';
+import { Home, Calendar, ClipboardList, Dumbbell, TrendingUp, Settings2 } from 'lucide-react';
 
 const NAV_ITEMS = [
   { to: '/',          Icon: Home,          label: 'Inicio'     },
   { to: '/calendar',  Icon: Calendar,      label: 'Calendario' },
   { to: '/routines',  Icon: ClipboardList, label: 'Rutinas'    },
   { to: '/exercises', Icon: Dumbbell,      label: 'Ejercicios' },
+  { to: '/progreso',  Icon: TrendingUp,    label: 'Progreso'   },
   { to: '/settings',  Icon: Settings2,     label: 'Ajustes'    },
 ];
 

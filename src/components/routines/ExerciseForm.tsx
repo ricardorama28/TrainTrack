@@ -1,20 +1,8 @@
 import { useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
-import type { ExerciseTemplate, MuscleGroup } from '../../types';
-
-const MUSCLE_OPTIONS: { value: MuscleGroup; label: string }[] = [
-  { value: 'glutes',    label: 'Glúteos'   },
-  { value: 'legs',      label: 'Piernas'   },
-  { value: 'back',      label: 'Espalda'   },
-  { value: 'chest',     label: 'Pecho'     },
-  { value: 'shoulders', label: 'Hombros'   },
-  { value: 'arms',      label: 'Brazos'    },
-  { value: 'core',      label: 'Core'      },
-  { value: 'full-body', label: 'Full Body' },
-  { value: 'mobility',  label: 'Movilidad' },
-  { value: 'other',     label: 'Otro'      },
-];
+import { MUSCLE_OPTIONS, PRIORITY_OPTIONS } from '../../lib/labels';
+import type { ExerciseTemplate, MuscleGroup, ProgressionMethod, ExercisePriority } from '../../types';
 
 interface ExerciseFormProps {
   open: boolean;
@@ -35,6 +23,20 @@ export function ExerciseForm({ open, exercise, onClose, onSave }: ExerciseFormPr
   const [muscleGroup, setMuscleGroup] = useState<MuscleGroup | ''>(exercise?.muscleGroup ?? '');
   const [isOptional, setIsOptional] = useState(exercise?.isOptional ?? false);
 
+  // ── Progression (prescription) ──
+  const [showProgression, setShowProgression] = useState(
+    exercise?.progressionMethod != null && exercise.progressionMethod !== 'none',
+  );
+  const [progressionMethod, setProgressionMethod] = useState<ProgressionMethod>(
+    exercise?.progressionMethod ?? 'none',
+  );
+  const [targetRepMin, setTargetRepMin] = useState<number | ''>(exercise?.targetRepMin ?? '');
+  const [targetRepMax, setTargetRepMax] = useState<number | ''>(exercise?.targetRepMax ?? '');
+  const [targetRir, setTargetRir] = useState<number | ''>(exercise?.targetRir ?? '');
+  const [weightIncrement, setWeightIncrement] = useState<number | ''>(exercise?.weightIncrement ?? '');
+  const [priority, setPriority] = useState<ExercisePriority | ''>(exercise?.priority ?? '');
+  const [progressionNotes, setProgressionNotes] = useState(exercise?.progressionNotes ?? '');
+
   function handleSave() {
     if (!name.trim()) return;
     onSave({
@@ -48,6 +50,13 @@ export function ExerciseForm({ open, exercise, onClose, onSave }: ExerciseFormPr
       videoUrl: videoUrl || undefined,
       muscleGroup: muscleGroup || undefined,
       isOptional,
+      progressionMethod: progressionMethod !== 'none' ? progressionMethod : undefined,
+      targetRepMin: targetRepMin !== '' ? Number(targetRepMin) : undefined,
+      targetRepMax: targetRepMax !== '' ? Number(targetRepMax) : undefined,
+      targetRir: targetRir !== '' ? Number(targetRir) : undefined,
+      weightIncrement: weightIncrement !== '' ? Number(weightIncrement) : undefined,
+      priority: priority || undefined,
+      progressionNotes: progressionNotes.trim() || undefined,
     });
     onClose();
   }
@@ -124,6 +133,71 @@ export function ExerciseForm({ open, exercise, onClose, onSave }: ExerciseFormPr
         <div>
           <label className="label">Notas técnicas</label>
           <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} placeholder="Técnica, puntos clave..." className="input resize-none" />
+        </div>
+
+        {/* ── Progresión ── */}
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700">
+          <button
+            type="button"
+            onClick={() => setShowProgression(v => !v)}
+            className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200"
+          >
+            <span>📈 Progresión {progressionMethod !== 'none' && <span className="text-primary-500">· activa</span>}</span>
+            <span className="text-gray-400">{showProgression ? '▾' : '▸'}</span>
+          </button>
+          {showProgression && (
+            <div className="px-3 pb-3 space-y-3 border-t border-gray-100 dark:border-gray-700/60 pt-3">
+              <div>
+                <label className="label">Método</label>
+                <select
+                  value={progressionMethod}
+                  onChange={e => setProgressionMethod(e.target.value as ProgressionMethod)}
+                  className="input"
+                >
+                  <option value="none">Sin progresión automática</option>
+                  <option value="double-progression">Doble progresión (reps → carga)</option>
+                </select>
+              </div>
+
+              {progressionMethod === 'double-progression' && (
+                <>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="label">Reps mín</label>
+                      <input type="number" min="1" value={targetRepMin} onChange={e => setTargetRepMin(e.target.value === '' ? '' : Number(e.target.value))} placeholder="8" className="input" />
+                    </div>
+                    <div>
+                      <label className="label">Reps máx</label>
+                      <input type="number" min="1" value={targetRepMax} onChange={e => setTargetRepMax(e.target.value === '' ? '' : Number(e.target.value))} placeholder="10" className="input" />
+                    </div>
+                    <div>
+                      <label className="label" title="RIR mínimo aceptable para aumentar carga">RIR mín</label>
+                      <input type="number" min="0" value={targetRir} onChange={e => setTargetRir(e.target.value === '' ? '' : Number(e.target.value))} placeholder="1" className="input" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="label">Incremento de carga (kg)</label>
+                    <input type="number" min="0" step="0.5" value={weightIncrement} onChange={e => setWeightIncrement(e.target.value === '' ? '' : Number(e.target.value))} placeholder="2.5" className="input" />
+                  </div>
+                </>
+              )}
+
+              <div>
+                <label className="label">Prioridad</label>
+                <select value={priority} onChange={e => setPriority(e.target.value as ExercisePriority)} className="input">
+                  <option value="">Sin especificar</option>
+                  {PRIORITY_OPTIONS.map(o => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="label">Nota de progresión</label>
+                <textarea value={progressionNotes} onChange={e => setProgressionNotes(e.target.value)} rows={2} placeholder="Ej: no subir carga si aparece molestia lumbar" className="input resize-none" />
+              </div>
+            </div>
+          )}
         </div>
 
         <label className="flex items-center gap-2 cursor-pointer">

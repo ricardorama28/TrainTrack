@@ -32,9 +32,10 @@ interface RoutinesPageProps {
   getOrCreateExercise: (name: string, defaults?: Partial<Omit<Exercise, 'id' | 'createdAt' | 'nameLower' | 'name'>>, options?: { enrich?: boolean }) => Exercise;
   onSaveLog: (log: Omit<WorkoutLog, 'id'>) => void;
   autoEnrich: boolean;
+  logs: WorkoutLog[];
 }
 
-export function RoutinesPage({ routines, exercises, onAdd, onUpdate, onDelete, onDuplicate, onMove, getOrCreateExercise, onSaveLog, autoEnrich }: RoutinesPageProps) {
+export function RoutinesPage({ routines, exercises, onAdd, onUpdate, onDelete, onDuplicate, onMove, getOrCreateExercise, onSaveLog, autoEnrich, logs }: RoutinesPageProps) {
   const [formOpen, setFormOpen] = useState(false);
   const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
   const [importOpen, setImportOpen] = useState(false);
@@ -177,6 +178,7 @@ export function RoutinesPage({ routines, exercises, onAdd, onUpdate, onDelete, o
         <WorkoutSession
           routine={activeRoutine}
           exercises={exercises}
+          logs={logs}
           onCancel={closeSession}
           onFinish={(log) => { onSaveLog(log); closeSession(); }}
         />
@@ -184,6 +186,7 @@ export function RoutinesPage({ routines, exercises, onAdd, onUpdate, onDelete, o
         <WorkoutSession
           resume={resumeSession}
           exercises={exercises}
+          logs={logs}
           onCancel={closeSession}
           onFinish={(log) => { onSaveLog(log); closeSession(); }}
         />
