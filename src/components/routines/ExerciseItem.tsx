@@ -1,19 +1,7 @@
-import { Button } from '../ui/Button';
+import { Clapperboard, Pencil, Trash2 } from 'lucide-react';
 import { Badge } from '../ui/Badge';
-import type { ExerciseTemplate, MuscleGroup } from '../../types';
-
-const MUSCLE_LABELS: Record<MuscleGroup, string> = {
-  glutes:    'Glúteos',
-  legs:      'Piernas',
-  back:      'Espalda',
-  chest:     'Pecho',
-  shoulders: 'Hombros',
-  arms:      'Brazos',
-  core:      'Core',
-  'full-body': 'Full Body',
-  mobility:  'Movilidad',
-  other:     'Otro',
-};
+import { MUSCLE_LABELS } from '../../lib/labels';
+import type { ExerciseTemplate } from '../../types';
 
 interface ExerciseItemProps {
   exercise: ExerciseTemplate;
@@ -33,6 +21,9 @@ export function ExerciseItem({ exercise, onEdit, onDelete }: ExerciseItemProps) 
             {exercise.muscleGroup && (
               <Badge variant="purple">{MUSCLE_LABELS[exercise.muscleGroup]}</Badge>
             )}
+            {exercise.priority && exercise.priority !== 'primary' && (
+              <Badge variant="gray">{exercise.priority === 'optional' ? 'Opcional' : 'Importante'}</Badge>
+            )}
           </div>
           <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-xs text-gray-500 dark:text-gray-400">
             {exercise.sets && exercise.reps && (
@@ -49,15 +40,15 @@ export function ExerciseItem({ exercise, onEdit, onDelete }: ExerciseItemProps) 
               href={exercise.videoUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-primary-600 dark:text-primary-400 hover:underline mt-1 inline-block"
+              className="inline-flex items-center gap-1 text-xs text-primary-600 dark:text-primary-400 hover:underline mt-1"
             >
-              🎬 Ver video
+              <Clapperboard size={13} /> Ver video
             </a>
           )}
         </div>
         <div className="flex gap-1">
-          <button onClick={onEdit} className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-400 text-sm">✏️</button>
-          <button onClick={onDelete} className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-400 text-sm">🗑️</button>
+          <button onClick={onEdit} aria-label="Editar" className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-400"><Pencil size={15} /></button>
+          <button onClick={onDelete} aria-label="Eliminar" className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-400"><Trash2 size={15} /></button>
         </div>
       </div>
     </div>

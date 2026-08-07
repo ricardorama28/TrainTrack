@@ -22,7 +22,7 @@ export function WeeklyVolumeChart({ data, metric = 'sets' }: WeeklyVolumeChartPr
           <XAxis dataKey="week" tick={{ fontSize: 10, fill: CHART.axis }} tickLine={false} axisLine={false} />
           <YAxis tick={{ fontSize: 10, fill: CHART.axis }} tickLine={false} axisLine={false} width={40} allowDecimals={false} />
           <Tooltip
-            contentStyle={{ background: '#1e293b', border: 'none', borderRadius: 12, fontSize: 12 }}
+            contentStyle={{ background: '#141B16', border: 'none', borderRadius: 12, fontSize: 12 }}
             labelStyle={{ color: '#cbd5e1' }}
             itemStyle={{ color: CHART.accent }}
             formatter={(v: number) => [v, label]}

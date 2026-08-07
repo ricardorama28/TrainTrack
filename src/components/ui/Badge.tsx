@@ -16,7 +16,8 @@ const VARIANTS: Record<BadgeVariant, string> = {
   orange: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
   gray:   'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
   yellow: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300',
-  purple: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
+  // Repurposed to the brand lime (was violet): muscle-group badges now read on-brand.
+  purple: 'bg-primary-100 text-primary-800 dark:bg-primary-900/40 dark:text-primary-300',
 };
 
 export function Badge({ children, variant = 'gray', className = '' }: BadgeProps) {

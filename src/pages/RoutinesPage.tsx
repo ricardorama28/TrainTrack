@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Download, Plus, Dumbbell, ClipboardList } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
 import { RoutineCard } from '../components/routines/RoutineCard';
@@ -95,20 +96,20 @@ export function RoutinesPage({ routines, exercises, onAdd, onUpdate, onDelete, o
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Rutinas</h1>
+        <h1 className="text-2xl font-display font-bold tracking-tight text-gray-900 dark:text-white">Rutinas</h1>
         <div className="flex gap-2">
           <Button variant="secondary" size="sm" onClick={() => setImportOpen(true)}>
-            📥 Importar
+            <Download size={15} /> Importar
           </Button>
           <Button size="sm" onClick={() => { setEditingRoutine(null); setFormOpen(true); }}>
-            + Nueva
+            <Plus size={15} /> Nueva
           </Button>
         </div>
       </div>
 
       {resumeSession && !resumeOpen && !activeRoutine && (
         <div className="flex items-center gap-3 rounded-2xl border border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20 px-4 py-3">
-          <span className="text-2xl">🏋️</span>
+          <Dumbbell size={24} className="text-primary-600 dark:text-primary-400 shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">Entrenamiento en curso</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{resumeSession.routineName}</p>
@@ -125,13 +126,13 @@ export function RoutinesPage({ routines, exercises, onAdd, onUpdate, onDelete, o
 
       {routines.length === 0 ? (
         <EmptyState
-          icon="📋"
+          icon={<ClipboardList />}
           title="No hay rutinas todavía"
           description="Creá tu primera rutina o importá una desde texto."
           action={
             <div className="flex gap-3">
               <Button variant="secondary" onClick={() => setImportOpen(true)}>
-                📥 Importar rutina
+                <Download size={16} /> Importar rutina
               </Button>
               <Button onClick={() => { setEditingRoutine(null); setFormOpen(true); }}>
                 + Crear rutina

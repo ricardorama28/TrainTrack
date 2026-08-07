@@ -1,4 +1,8 @@
 import { useState } from 'react';
+import {
+  ClipboardList, FileText, Bot, Lightbulb, AlertTriangle, ArrowRight, ArrowLeft,
+  Check, Copy, Trash2, X, type LucideIcon,
+} from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { parseRoutineText } from '../../lib/parser';
@@ -260,10 +264,10 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
 
   // ── Render ───────────────────────────────────────────────────────────────────
 
-  const TABS: [Tab, string][] = [
-    ['json', '📋 JSON'],
-    ['text', '📝 Texto libre'],
-    ['prompt', '🤖 Prompt ChatGPT'],
+  const TABS: [Tab, LucideIcon, string][] = [
+    ['json', ClipboardList, 'JSON'],
+    ['text', FileText, 'Texto libre'],
+    ['prompt', Bot, 'Prompt ChatGPT'],
   ];
 
   return (
@@ -272,7 +276,7 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
         <div className="space-y-4">
           {/* Tab bar */}
           <div className="flex rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-            {TABS.map(([t, label]) => (
+            {TABS.map(([t, Icon, label]) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -282,7 +286,7 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
                     : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
               >
-                {label}
+                <Icon size={13} /> {label}
                 {t === 'json' && (
                   <span className={`text-[9px] px-1 rounded ${tab === 'json' ? 'bg-white/20 text-white' : 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'}`}>
                     Rec.
@@ -296,8 +300,8 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
           {tab === 'json' && (
             <div className="space-y-3">
               <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 text-xs text-blue-700 dark:text-blue-300">
-                <p className="font-medium mb-1">💡 Importación por JSON</p>
-                <p>Pegá el JSON generado con el prompt de la pestaña "🤖 Prompt ChatGPT". La estructura es validada antes de importar.</p>
+                <p className="inline-flex items-center gap-1 font-medium mb-1"><Lightbulb size={13} /> Importación por JSON</p>
+                <p>Pegá el JSON generado con el prompt de la pestaña "Prompt ChatGPT". La estructura es validada antes de importar.</p>
               </div>
               <div>
                 <label className="label">JSON de la rutina</label>
@@ -311,7 +315,7 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
               </div>
               {jsonError && (
                 <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-3 text-xs text-red-700 dark:text-red-300">
-                  <p className="font-medium">⚠️ Error de validación</p>
+                  <p className="inline-flex items-center gap-1 font-medium"><AlertTriangle size={13} /> Error de validación</p>
                   <p className="mt-0.5">{jsonError}</p>
                 </div>
               )}
@@ -327,7 +331,7 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
                 <div className="flex-1" />
                 <Button variant="secondary" onClick={resetAndClose}>Cancelar</Button>
                 <Button onClick={handleValidateJson} disabled={!jsonInput.trim()}>
-                  Validar y continuar →
+                  Validar y continuar <ArrowRight size={16} />
                 </Button>
               </div>
             </div>
@@ -337,7 +341,7 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
           {tab === 'text' && (
             <div className="space-y-3">
               <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-3 text-xs text-yellow-700 dark:text-yellow-300">
-                <p className="font-medium mb-1">⚠️ Importación por texto libre</p>
+                <p className="inline-flex items-center gap-1 font-medium mb-1"><AlertTriangle size={13} /> Importación por texto libre</p>
                 <p>El parser solo reconoce ejercicios con series/reps explícitas (ej: 4x10). Texto médico, objetivos y notas se ignoran automáticamente. Para mejores resultados usá el formato JSON.</p>
               </div>
               <div>
@@ -354,7 +358,7 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
                 <div className="flex-1" />
                 <Button variant="secondary" onClick={resetAndClose}>Cancelar</Button>
                 <Button onClick={handleParseText} disabled={!textInput.trim()}>
-                  Analizar texto →
+                  Analizar texto <ArrowRight size={16} />
                 </Button>
               </div>
             </div>
@@ -364,12 +368,12 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
           {tab === 'prompt' && (
             <div className="space-y-3">
               <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-3 text-xs text-purple-700 dark:text-purple-300">
-                <p className="font-medium mb-2">🤖 Cómo usar el prompt con ChatGPT</p>
+                <p className="inline-flex items-center gap-1 font-medium mb-2"><Bot size={13} /> Cómo usar el prompt con ChatGPT</p>
                 <ol className="list-decimal ml-4 space-y-0.5">
                   <li>Copiá el prompt de abajo con el botón "Copiar"</li>
                   <li>Pegalo en ChatGPT y reemplazá lo que está entre corchetes con tu pedido</li>
                   <li>ChatGPT va a responder solo con el JSON</li>
-                  <li>Copiá el JSON, volvé a la pestaña "📋 JSON" y pegalo allí</li>
+                  <li>Copiá el JSON, volvé a la pestaña "JSON" y pegalo allí</li>
                 </ol>
               </div>
               <div>
@@ -385,7 +389,7 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
                 <div className="flex-1" />
                 <Button variant="secondary" onClick={resetAndClose}>Cerrar</Button>
                 <Button onClick={handleCopyPrompt}>
-                  {copied ? '✓ ¡Copiado!' : '📋 Copiar prompt'}
+                  {copied ? <><Check size={16} /> ¡Copiado!</> : <><Copy size={16} /> Copiar prompt</>}
                 </Button>
               </div>
             </div>
@@ -397,9 +401,9 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
           <div className="flex items-center gap-2">
             <button
               onClick={handleBack}
-              className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
             >
-              ← Volver
+              <ArrowLeft size={15} /> Volver
             </button>
             <span className="text-sm text-gray-300 dark:text-gray-600">|</span>
             <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -432,15 +436,16 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
                     onChange={e => updateDay(dayIdx, { type: e.target.value as 'workout' | 'active-rest' })}
                     className="text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1"
                   >
-                    <option value="workout">💪 Entrenamiento</option>
-                    <option value="active-rest">🚶 Descanso activo</option>
+                    <option value="workout">Entrenamiento</option>
+                    <option value="active-rest">Descanso activo</option>
                   </select>
                   <button
                     onClick={() => deleteDay(dayIdx)}
-                    className="text-red-400 hover:text-red-600 text-sm leading-none"
+                    className="text-red-400 hover:text-red-600"
                     title="Eliminar día"
+                    aria-label="Eliminar día"
                   >
-                    🗑️
+                    <Trash2 size={15} />
                   </button>
                 </div>
 
@@ -469,10 +474,11 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
                         />
                         <button
                           onClick={() => deleteExercise(dayIdx, exIdx)}
-                          className="text-red-400 hover:text-red-600 text-xs leading-none"
+                          className="text-red-400 hover:text-red-600"
                           title="Eliminar ejercicio"
+                          aria-label="Eliminar ejercicio"
                         >
-                          ✕
+                          <X size={15} />
                         </button>
                       </div>
                       <div className="flex gap-2 flex-wrap">
@@ -528,10 +534,10 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
 
           <div className="flex gap-3 pt-2">
             <Button variant="secondary" onClick={handleBack} fullWidth>
-              ← Volver
+              <ArrowLeft size={16} /> Volver
             </Button>
             <Button onClick={handleConfirm} disabled={previewDays.length === 0} fullWidth>
-              ✓ Guardar {previewDays.length} rutina{previewDays.length !== 1 ? 's' : ''}
+              <Check size={16} /> Guardar {previewDays.length} rutina{previewDays.length !== 1 ? 's' : ''}
             </Button>
           </div>
         </div>

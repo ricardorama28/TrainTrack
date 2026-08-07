@@ -1,3 +1,4 @@
+import { Check, Moon, Footprints, X } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { getWeekDays, getDayName, todayStr } from '../../lib/dates';
 import type { WorkoutLog, Settings } from '../../types';
@@ -51,11 +52,11 @@ export function WeeklySummary({ logs, settings }: WeeklySummaryProps) {
               <span className={`text-[10px] font-medium ${isToday ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'}`}>
                 {getDayName(date)}
               </span>
-              <div className={`w-7 h-7 rounded-full flex items-center justify-center ${dotColor} ${isToday ? 'ring-2 ring-primary-500 ring-offset-1' : ''}`}>
-                {log?.type === 'workout' && <span className="text-[10px]">✓</span>}
-                {log?.type === 'rest' && <span className="text-[10px]">💤</span>}
-                {log?.type === 'active-rest' && <span className="text-[10px]">🚶</span>}
-                {log?.type === 'missed' && <span className="text-[10px]">✗</span>}
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white ${dotColor} ${isToday ? 'ring-2 ring-primary-500 ring-offset-1' : ''}`}>
+                {log?.type === 'workout' && <Check size={13} strokeWidth={3} />}
+                {log?.type === 'rest' && <Moon size={12} />}
+                {log?.type === 'active-rest' && <Footprints size={12} />}
+                {log?.type === 'missed' && <X size={13} strokeWidth={3} />}
               </div>
               {isToday && <div className="w-1 h-1 rounded-full bg-primary-500" />}
             </div>

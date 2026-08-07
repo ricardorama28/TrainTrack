@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { Dumbbell, Moon, Footprints, X, type LucideIcon } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
+import { IntensityMeter } from '../ui/IntensityMeter';
 import { formatDateLong } from '../../lib/dates';
 import type { WorkoutLog, WorkoutType, FeelingType, Routine } from '../../types';
 
@@ -14,18 +16,11 @@ interface DayDetailProps {
   onDelete?: (id: string) => void;
 }
 
-const WORKOUT_TYPES: { value: WorkoutType; label: string; icon: string; badge: string }[] = [
-  { value: 'workout',     label: 'Entrenado',     icon: '💪', badge: 'green' },
-  { value: 'rest',        label: 'Descanso',      icon: '💤', badge: 'blue'  },
-  { value: 'active-rest', label: 'Desc. activo',  icon: '🚶', badge: 'teal'  },
-  { value: 'missed',      label: 'No realizado',  icon: '✗',  badge: 'red'   },
-];
-
-const FEELINGS: { value: FeelingType; label: string; icon: string }[] = [
-  { value: 'easy',      label: 'Fácil',        icon: '😊' },
-  { value: 'normal',    label: 'Normal',       icon: '😐' },
-  { value: 'hard',      label: 'Difícil',      icon: '😤' },
-  { value: 'very-hard', label: 'Muy difícil',  icon: '🥵' },
+const WORKOUT_TYPES: { value: WorkoutType; label: string; Icon: LucideIcon; badge: string }[] = [
+  { value: 'workout',     label: 'Entrenado',     Icon: Dumbbell,   badge: 'green' },
+  { value: 'rest',        label: 'Descanso',      Icon: Moon,       badge: 'blue'  },
+  { value: 'active-rest', label: 'Desc. activo',  Icon: Footprints, badge: 'teal'  },
+  { value: 'missed',      label: 'No realizado',  Icon: X,          badge: 'red'   },
 ];
 
 export function DayDetail({ date, log, routines, onClose, onSave, onDelete }: DayDetailProps) {
@@ -84,7 +79,7 @@ export function DayDetail({ date, log, routines, onClose, onSave, onDelete }: Da
                     : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-gray-300'
                 }`}
               >
-                <span>{wt.icon}</span>
+                <wt.Icon size={16} />
                 {wt.label}
               </button>
             ))}
@@ -127,23 +122,8 @@ export function DayDetail({ date, log, routines, onClose, onSave, onDelete }: Da
         {/* Feeling */}
         {type === 'workout' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">¿Cómo me sentí?</label>
-            <div className="flex gap-2">
-              {FEELINGS.map(f => (
-                <button
-                  key={f.value}
-                  onClick={() => setFeeling(f.value)}
-                  className={`flex-1 flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 transition-all ${
-                    feeling === f.value
-                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                      : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'
-                  }`}
-                >
-                  <span className="text-xl">{f.icon}</span>
-                  <span className="text-[10px] text-gray-600 dark:text-gray-300 font-medium">{f.label}</span>
-                </button>
-              ))}
-            </div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Esfuerzo</label>
+            <IntensityMeter value={feeling} onChange={setFeeling} />
           </div>
         )}
 

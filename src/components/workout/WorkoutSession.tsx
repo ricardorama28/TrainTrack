@@ -1,6 +1,11 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import {
+  Timer, Target, Dumbbell, Clapperboard, Search, StickyNote, Pin, Check, X,
+  ArrowLeft, ArrowRight, ArrowDown, Repeat, Flag, Trophy, Play,
+} from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
+import { IntensityMeter } from '../ui/IntensityMeter';
 import { RestTimer } from './RestTimer';
 import { HoldTimer } from './HoldTimer';
 import { todayStr } from '../../lib/dates';
@@ -34,13 +39,6 @@ interface Step {
 function ytSearchUrl(name: string): string {
   return `https://www.youtube.com/results?search_query=${encodeURIComponent(name + ' ejercicio técnica')}`;
 }
-
-const FEELINGS: { value: FeelingType; label: string; icon: string }[] = [
-  { value: 'easy', label: 'Fácil', icon: '😊' },
-  { value: 'normal', label: 'Normal', icon: '😐' },
-  { value: 'hard', label: 'Difícil', icon: '😤' },
-  { value: 'very-hard', label: 'Muy difícil', icon: '🥵' },
-];
 
 /** Flatten the session into an ordered list of (exercise, set) steps. */
 function buildSteps(session: SessionExercise[], setOrder: 'sequential' | 'circuit'): Step[] {
@@ -248,34 +246,19 @@ export function WorkoutSession({ routine, resume, exercises, logs = [], defaultR
   // ── Finishing screen ─────────────────────────────────────────────────────────
   if (phase === 'finishing') {
     return (
-      <div className="fixed inset-0 z-50 bg-gray-950 overflow-y-auto">
+      <div className="fixed inset-0 z-50 bg-ink-950 overflow-y-auto">
         <div className="max-w-lg mx-auto p-5 space-y-6">
           <div className="text-center pt-8">
-            <div className="text-6xl mb-3">🎉</div>
-            <h2 className="text-3xl font-bold text-white">¡Listo!</h2>
-            <p className="text-gray-400 mt-2">
+            <div className="flex justify-center mb-3"><Trophy size={56} className="text-primary-400" /></div>
+            <h2 className="text-3xl font-display font-bold text-white">¡Listo!</h2>
+            <p className="text-gray-400 mt-2 tabular-nums">
               {routineName} · {formatElapsed(Date.now() - startedAt)} · {doneSets}/{totalSets} series
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">¿Cómo te sentiste?</label>
-            <div className="flex gap-2">
-              {FEELINGS.map(f => (
-                <button
-                  key={f.value}
-                  onClick={() => setFeeling(f.value)}
-                  className={`flex-1 flex flex-col items-center gap-1.5 p-3 rounded-2xl border-2 transition-all ${
-                    feeling === f.value
-                      ? 'border-primary-500 bg-primary-500/10'
-                      : 'border-gray-700 hover:border-gray-600 bg-gray-800/50'
-                  }`}
-                >
-                  <span className="text-2xl">{f.icon}</span>
-                  <span className="text-[10px] text-gray-300 font-semibold">{f.label}</span>
-                </button>
-              ))}
-            </div>
+            <label className="block text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Esfuerzo de la sesión</label>
+            <IntensityMeter value={feeling} onChange={setFeeling} dark />
           </div>
 
           <div>
@@ -291,7 +274,7 @@ export function WorkoutSession({ routine, resume, exercises, logs = [], defaultR
 
           <div className="flex gap-3 pb-8">
             <Button variant="secondary" onClick={() => setPhase('active')} className="flex-1">
-              ← Volver
+              <ArrowLeft size={16} /> Volver
             </Button>
             <Button onClick={handleFinish} className="flex-1">
               Guardar entrenamiento
@@ -304,28 +287,28 @@ export function WorkoutSession({ routine, resume, exercises, logs = [], defaultR
 
   // ── Active session ───────────────────────────────────────────────────────────
   return (
-    <div className="fixed inset-0 z-50 bg-gray-950 flex flex-col">
+    <div className="fixed inset-0 z-50 bg-ink-950 flex flex-col">
       {/* Header */}
-      <div className="flex-shrink-0 bg-gray-900 border-b border-gray-800 px-4 py-3">
+      <div className="flex-shrink-0 bg-ink-900 border-b border-gray-800 px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="font-bold text-white truncate">{routineName}</p>
-            <p className="text-xs text-gray-500 tabular-nums">⏱ {formatElapsed(elapsed)}</p>
+            <p className="inline-flex items-center gap-1 text-xs text-gray-500 tabular-nums"><Timer size={12} /> {formatElapsed(elapsed)}</p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSetOrder(o => (o === 'sequential' ? 'circuit' : 'sequential'))}
-              className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700 transition"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700 transition"
               title="Cambiar orden de series"
             >
-              {setOrder === 'sequential' ? '↓ Seguidas' : '⟳ Circuito'}
+              {setOrder === 'sequential' ? <><ArrowDown size={13} /> Seguidas</> : <><Repeat size={13} /> Circuito</>}
             </button>
             <button
               onClick={abandon}
               className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-gray-700 text-gray-400 hover:text-white transition"
               aria-label="Abandonar"
             >
-              ✕
+              <X size={18} />
             </button>
           </div>
         </div>
@@ -358,12 +341,12 @@ export function WorkoutSession({ routine, resume, exercises, logs = [], defaultR
               </div>
               <div className="flex items-center gap-4 text-sm text-gray-400 flex-wrap">
                 {timeBased ? (
-                  <span className="font-semibold text-gray-300">🎯 {ex.sets.length}×{ex.targetSeconds ?? 30}s</span>
+                  <span className="inline-flex items-center gap-1 font-semibold text-gray-300 tabular-nums"><Target size={14} /> {ex.sets.length}×{ex.targetSeconds ?? 30}s</span>
                 ) : ex.targetReps && (
-                  <span className="font-semibold text-gray-300">🎯 {ex.sets.length}×{ex.targetReps}</span>
+                  <span className="inline-flex items-center gap-1 font-semibold text-gray-300 tabular-nums"><Target size={14} /> {ex.sets.length}×{ex.targetReps}</span>
                 )}
                 {ex.targetWeight != null && (
-                  <span>🏋️ {ex.targetWeight} kg</span>
+                  <span className="inline-flex items-center gap-1 tabular-nums"><Dumbbell size={14} /> {ex.targetWeight} kg</span>
                 )}
                 {ex.referenceUrl ? (
                   <a
@@ -372,7 +355,7 @@ export function WorkoutSession({ routine, resume, exercises, logs = [], defaultR
                     rel="noopener noreferrer"
                     className="flex items-center gap-1 text-accent-400 hover:text-accent-300 font-medium transition"
                   >
-                    🎬 Ver referencia
+                    <Clapperboard size={14} /> Ver referencia
                   </a>
                 ) : (
                   <a
@@ -381,12 +364,12 @@ export function WorkoutSession({ routine, resume, exercises, logs = [], defaultR
                     rel="noopener noreferrer"
                     className="flex items-center gap-1 text-gray-400 hover:text-gray-200 font-medium transition"
                   >
-                    🔎 Buscar en YouTube
+                    <Search size={14} /> Buscar en YouTube
                   </a>
                 )}
               </div>
               {ex.primaryMuscles && ex.primaryMuscles.length > 0 && (
-                <p className="text-xs text-gray-500">💪 {ex.primaryMuscles.join(' · ')}</p>
+                <p className="inline-flex items-center gap-1 text-xs text-gray-500"><Dumbbell size={12} /> {ex.primaryMuscles.join(' · ')}</p>
               )}
               {ex.description && (
                 <p className="text-sm text-gray-300 bg-gray-800/60 rounded-xl px-4 py-2.5 border border-gray-700/50">
@@ -394,8 +377,8 @@ export function WorkoutSession({ routine, resume, exercises, logs = [], defaultR
                 </p>
               )}
               {ex.notes && (
-                <p className="text-sm text-gray-400 italic">
-                  📝 {ex.notes}
+                <p className="inline-flex items-start gap-1.5 text-sm text-gray-400 italic">
+                  <StickyNote size={14} className="mt-0.5 shrink-0" /> {ex.notes}
                 </p>
               )}
             </div>
@@ -403,8 +386,8 @@ export function WorkoutSession({ routine, resume, exercises, logs = [], defaultR
             {/* Objetivo de hoy (progression suggestion) */}
             {ex.plannedTarget && ex.plannedTarget.action !== 'repeat' && (
               <div className="rounded-2xl border border-primary-500/40 bg-primary-500/8 px-4 py-3 space-y-1">
-                <p className="text-sm font-bold text-primary-300">
-                  🎯 Objetivo de hoy:{' '}
+                <p className="inline-flex flex-wrap items-center gap-x-1 text-sm font-bold text-primary-300 tabular-nums">
+                  <Target size={15} className="shrink-0" /> Objetivo de hoy:{' '}
                   {ex.plannedTarget.targetWeight != null && <span>{ex.plannedTarget.targetWeight} kg</span>}
                   {ex.plannedTarget.targetReps && ex.plannedTarget.targetReps.length > 0 && (
                     <span> · ref {ex.plannedTarget.targetReps.join('/')}</span>
@@ -418,7 +401,7 @@ export function WorkoutSession({ routine, resume, exercises, logs = [], defaultR
                 </p>
                 <p className="text-xs text-gray-400">{ex.plannedTarget.reason}</p>
                 {ex.progressionNotes && (
-                  <p className="text-xs text-amber-300/90">📌 {ex.progressionNotes}</p>
+                  <p className="inline-flex items-start gap-1.5 text-xs text-accent-300/90"><Pin size={13} className="mt-0.5 shrink-0" /> {ex.progressionNotes}</p>
                 )}
                 {ex.plannedTarget.confidence !== 'high' && (
                   <p className="text-[11px] text-gray-500">Estimación con menos datos (sin RIR histórico).</p>
@@ -468,7 +451,7 @@ export function WorkoutSession({ routine, resume, exercises, logs = [], defaultR
                         value={set.weight ?? ''}
                         onChange={e => updateSet(exIdx, i, { weight: e.target.value ? Number(e.target.value) : undefined })}
                         placeholder="—"
-                        className="w-full px-2 py-2 rounded-xl border border-gray-700 bg-gray-900 text-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder:text-gray-600"
+                        className="w-full px-2 py-2 rounded-xl border border-gray-700 bg-ink-900 text-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder:text-gray-600"
                       />
                       {timeBased ? (
                         <input
@@ -477,7 +460,7 @@ export function WorkoutSession({ routine, resume, exercises, logs = [], defaultR
                           value={set.seconds ?? ''}
                           onChange={e => updateSet(exIdx, i, { seconds: e.target.value ? Number(e.target.value) : undefined })}
                           placeholder={ex.targetSeconds ? String(ex.targetSeconds) : '—'}
-                          className="w-full px-2 py-2 rounded-xl border border-gray-700 bg-gray-900 text-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder:text-gray-600"
+                          className="w-full px-2 py-2 rounded-xl border border-gray-700 bg-ink-900 text-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder:text-gray-600"
                         />
                       ) : (
                         <input
@@ -486,20 +469,20 @@ export function WorkoutSession({ routine, resume, exercises, logs = [], defaultR
                           value={set.reps ?? ''}
                           onChange={e => updateSet(exIdx, i, { reps: e.target.value ? Number(e.target.value) : undefined })}
                           placeholder="—"
-                          className="w-full px-2 py-2 rounded-xl border border-gray-700 bg-gray-900 text-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder:text-gray-600"
+                          className="w-full px-2 py-2 rounded-xl border border-gray-700 bg-ink-900 text-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder:text-gray-600"
                         />
                       )}
                       <div className="flex items-center justify-center">
                         <button
                           onClick={() => toggleSet(i)}
-                          className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold transition active:scale-90 ${
+                          className={`w-9 h-9 rounded-xl flex items-center justify-center transition active:scale-90 ${
                             set.completed
-                              ? 'bg-primary-500 text-white shadow-md shadow-primary-500/30'
+                              ? 'bg-primary-500 text-ink-950 shadow-md shadow-primary-500/30'
                               : 'bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-white'
                           }`}
                           title={set.completed ? 'Marcar como pendiente' : 'Completar serie'}
                         >
-                          ✓
+                          <Check size={18} strokeWidth={3} />
                         </button>
                       </div>
                     </div>
@@ -513,7 +496,7 @@ export function WorkoutSession({ routine, resume, exercises, logs = [], defaultR
                           value={set.rir ?? ''}
                           onChange={e => updateSet(exIdx, i, { rir: e.target.value ? Number(e.target.value) : undefined })}
                           placeholder="—"
-                          className="w-16 px-2 py-1 rounded-lg border border-gray-700 bg-gray-900 text-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder:text-gray-600"
+                          className="w-16 px-2 py-1 rounded-lg border border-gray-700 bg-ink-900 text-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder:text-gray-600"
                         />
                         <span className="text-gray-600">reps en reserva</span>
                       </div>
@@ -544,16 +527,16 @@ export function WorkoutSession({ routine, resume, exercises, logs = [], defaultR
             {timeBased && activeSet && !activeSet.completed ? (
               <button
                 onClick={() => setHolding(true)}
-                className="w-full py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white text-base font-bold active:scale-95 transition shadow-lg shadow-amber-500/25"
+                className="w-full inline-flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-accent-500 hover:bg-accent-600 text-white text-base font-bold active:scale-95 transition shadow-lg shadow-accent-500/25 tabular-nums"
               >
-                ▶ Iniciar serie · {ex.targetSeconds ?? 30}s
+                <Play size={18} className="fill-current" /> Iniciar serie · {ex.targetSeconds ?? 30}s
               </button>
             ) : (
               <button
                 onClick={() => startRest(ex.restSeconds ?? defaultRestSeconds)}
-                className="w-full py-3 rounded-2xl bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm font-semibold border border-gray-700 hover:border-gray-600 transition"
+                className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-2xl bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm font-semibold border border-gray-700 hover:border-gray-600 transition tabular-nums"
               >
-                ⏱ Iniciar descanso ({ex.restSeconds ?? defaultRestSeconds}s)
+                <Timer size={16} /> Iniciar descanso ({ex.restSeconds ?? defaultRestSeconds}s)
               </button>
             )}
           </div>
@@ -561,22 +544,23 @@ export function WorkoutSession({ routine, resume, exercises, logs = [], defaultR
       </div>
 
       {/* Footer nav */}
-      <div className="flex-shrink-0 bg-gray-900 border-t border-gray-800 px-4 py-3">
+      <div className="flex-shrink-0 bg-ink-900 border-t border-gray-800 px-4 py-3">
         <div className="max-w-lg mx-auto flex gap-2">
           <Button
             variant="secondary"
             onClick={() => setCurrentStep(s => Math.max(0, Math.min(s, steps.length - 1) - 1))}
             disabled={safeStep === 0}
+            aria-label="Serie anterior"
           >
-            ←
+            <ArrowLeft size={16} />
           </Button>
           {safeStep < steps.length - 1 ? (
             <Button variant="accent" onClick={() => setCurrentStep(safeStep + 1)} fullWidth>
-              Siguiente serie →
+              Siguiente serie <ArrowRight size={16} />
             </Button>
           ) : (
             <Button onClick={() => setPhase('finishing')} fullWidth>
-              🏁 Finalizar entrenamiento
+              <Flag size={16} /> Finalizar entrenamiento
             </Button>
           )}
           {safeStep < steps.length - 1 && (

@@ -1,5 +1,6 @@
 import { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { storage } from '../lib/storage';
 
 interface ErrorBoundaryProps {
@@ -49,8 +50,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
         <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 p-6 text-center">
-          <span className="text-5xl">😵</span>
-          <h1 className="mt-3 text-xl font-bold text-gray-900 dark:text-white">
+          <div className="flex justify-center"><AlertTriangle size={44} className="text-accent-500" /></div>
+          <h1 className="mt-3 text-xl font-display font-bold text-gray-900 dark:text-white">
             Algo salió mal
           </h1>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">

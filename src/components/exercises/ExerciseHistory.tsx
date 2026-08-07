@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { ArrowUp, ArrowDown, Minus, Trophy, AlertTriangle, Dumbbell, type LucideIcon } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Badge } from '../ui/Badge';
 import { formatDateShort } from '../../lib/dates';
@@ -30,10 +31,10 @@ function setLabel(set: { reps?: number; seconds?: number; weight?: number }): st
   return parts.join(' · ') || '—';
 }
 
-const TREND_META: Record<Trend, { icon: string; label: string; variant: 'green' | 'gray' | 'red' }> = {
-  up: { icon: '↑', label: 'Progresando', variant: 'green' },
-  flat: { icon: '→', label: 'Estable', variant: 'gray' },
-  down: { icon: '↓', label: 'Bajando', variant: 'red' },
+const TREND_META: Record<Trend, { Icon: LucideIcon; label: string; variant: 'green' | 'gray' | 'red' }> = {
+  up: { Icon: ArrowUp, label: 'Progresando', variant: 'green' },
+  flat: { Icon: Minus, label: 'Estable', variant: 'gray' },
+  down: { Icon: ArrowDown, label: 'Bajando', variant: 'red' },
 };
 
 export function ExerciseHistory({ exerciseName, logs, onClose }: ExerciseHistoryProps) {
@@ -66,10 +67,10 @@ export function ExerciseHistory({ exerciseName, logs, onClose }: ExerciseHistory
       <div className="space-y-4">
         {lastWeight !== undefined && (
           <div className="bg-primary-50 dark:bg-primary-900/20 rounded-xl p-3 flex items-center gap-3">
-            <span className="text-2xl">🏋️</span>
+            <Dumbbell size={24} className="text-primary-600 dark:text-primary-400" />
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400">Último peso registrado</p>
-              <p className="text-xl font-bold text-primary-600 dark:text-primary-400">{lastWeight} kg</p>
+              <p className="text-xl font-display font-bold text-primary-600 dark:text-primary-400 tabular-nums">{lastWeight} kg</p>
             </div>
           </div>
         )}
@@ -77,12 +78,13 @@ export function ExerciseHistory({ exerciseName, logs, onClose }: ExerciseHistory
         {analysis && (
           <div className="space-y-3">
             <div className="flex flex-wrap gap-2">
-              <Badge variant={TREND_META[analysis.trend].variant}>
-                {TREND_META[analysis.trend].icon} {TREND_META[analysis.trend].label}
-              </Badge>
+              {(() => {
+                const T = TREND_META[analysis.trend];
+                return <Badge variant={T.variant}><T.Icon size={12} strokeWidth={2.5} /> {T.label}</Badge>;
+              })()}
               {analysis.stalled.stalled && (
                 <Badge variant="red">
-                  ⚠️ {analysis.stalled.reason === 'ceiling-failure'
+                  <AlertTriangle size={12} /> {analysis.stalled.reason === 'ceiling-failure'
                     ? `${analysis.stalled.sessionsWithoutProgress} sesiones al techo sin reserva`
                     : `Sin progreso hace ${analysis.stalled.sessionsWithoutProgress} sesiones`}
                 </Badge>
@@ -92,13 +94,13 @@ export function ExerciseHistory({ exerciseName, logs, onClose }: ExerciseHistory
             {(analysis.prs.maxWeight || analysis.prs.maxTotalRepsAtWeight) && (
               <div className="flex flex-wrap gap-2 text-xs">
                 {analysis.prs.maxWeight && (
-                  <span className="rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 px-2 py-1 font-semibold">
-                    🏆 Carga máx {analysis.prs.maxWeight.value} kg
+                  <span className="inline-flex items-center gap-1 rounded-lg bg-accent-50 dark:bg-accent-900/20 text-accent-700 dark:text-accent-300 px-2 py-1 font-semibold tabular-nums">
+                    <Trophy size={13} /> Carga máx {analysis.prs.maxWeight.value} kg
                   </span>
                 )}
                 {analysis.prs.maxTotalRepsAtWeight && (
-                  <span className="rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 px-2 py-1 font-semibold">
-                    🏆 {analysis.prs.maxTotalRepsAtWeight.value} reps
+                  <span className="inline-flex items-center gap-1 rounded-lg bg-accent-50 dark:bg-accent-900/20 text-accent-700 dark:text-accent-300 px-2 py-1 font-semibold tabular-nums">
+                    <Trophy size={13} /> {analysis.prs.maxTotalRepsAtWeight.value} reps
                     {analysis.prs.maxTotalRepsAtWeight.weight ? ` @ ${analysis.prs.maxTotalRepsAtWeight.weight} kg` : ''}
                   </span>
                 )}

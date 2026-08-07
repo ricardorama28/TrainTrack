@@ -22,7 +22,7 @@ export function MuscleVolumeChart({ data }: MuscleVolumeChartProps) {
           <YAxis type="category" dataKey="label" tick={{ fontSize: 11, fill: CHART.axis }} tickLine={false} axisLine={false} width={72} />
           <Tooltip
             cursor={{ fill: 'rgba(148,163,184,0.1)' }}
-            contentStyle={{ background: '#1e293b', border: 'none', borderRadius: 12, fontSize: 12 }}
+            contentStyle={{ background: '#141B16', border: 'none', borderRadius: 12, fontSize: 12 }}
             labelStyle={{ color: '#cbd5e1' }}
             formatter={(v: number) => [`${v} series`, 'Trabajo']}
           />

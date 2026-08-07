@@ -1,8 +1,14 @@
 import { useState } from 'react';
+import { Hash, Timer, TrendingUp, ChevronDown, ChevronRight, type LucideIcon } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { MUSCLE_OPTIONS, PRIORITY_OPTIONS } from '../../lib/labels';
 import type { ExerciseTemplate, MuscleGroup, ProgressionMethod, ExercisePriority } from '../../types';
+
+const UNIT_OPTS: ['reps' | 'seconds', LucideIcon, string][] = [
+  ['reps', Hash, 'Repeticiones'],
+  ['seconds', Timer, 'Tiempo'],
+];
 
 interface ExerciseFormProps {
   open: boolean;
@@ -79,17 +85,17 @@ export function ExerciseForm({ open, exercise, onClose, onSave }: ExerciseFormPr
         <div>
           <label className="label">Medición</label>
           <div className="flex gap-3">
-            {([['reps', '🔢 Repeticiones'], ['seconds', '⏱ Tiempo']] as const).map(([val, label]) => (
+            {UNIT_OPTS.map(([val, Icon, label]) => (
               <button
                 key={val}
                 onClick={() => setUnit(val)}
-                className={`flex-1 py-2 px-3 rounded-xl border-2 text-sm font-medium transition-all ${
+                className={`flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl border-2 text-sm font-medium transition-all ${
                   unit === val
                     ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
                     : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300'
                 }`}
               >
-                {label}
+                <Icon size={15} /> {label}
               </button>
             ))}
           </div>
@@ -142,8 +148,8 @@ export function ExerciseForm({ open, exercise, onClose, onSave }: ExerciseFormPr
             onClick={() => setShowProgression(v => !v)}
             className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200"
           >
-            <span>📈 Progresión {progressionMethod !== 'none' && <span className="text-primary-500">· activa</span>}</span>
-            <span className="text-gray-400">{showProgression ? '▾' : '▸'}</span>
+            <span className="inline-flex items-center gap-1.5"><TrendingUp size={15} /> Progresión {progressionMethod !== 'none' && <span className="text-primary-600 dark:text-primary-400">· activa</span>}</span>
+            {showProgression ? <ChevronDown size={16} className="text-gray-400" /> : <ChevronRight size={16} className="text-gray-400" />}
           </button>
           {showProgression && (
             <div className="px-3 pb-3 space-y-3 border-t border-gray-100 dark:border-gray-700/60 pt-3">

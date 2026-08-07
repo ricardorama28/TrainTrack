@@ -62,7 +62,7 @@ export function HoldTimer({ seconds, onComplete, onStop }: HoldTimerProps) {
   const C = 2 * Math.PI * R;
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-gray-950/98 backdrop-blur-md p-6">
+    <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-ink-950/98 backdrop-blur-md p-6">
       <p className="text-amber-400 text-xs uppercase tracking-[0.2em] font-semibold mb-8">Aguantá</p>
 
       <div className="relative w-56 h-56 mb-10">
@@ -73,7 +73,7 @@ export function HoldTimer({ seconds, onComplete, onStop }: HoldTimerProps) {
             cy="60"
             r={R}
             fill="none"
-            stroke="#f59e0b"
+            stroke="#F85F26"
             strokeWidth="10"
             strokeLinecap="round"
             strokeDasharray={C}

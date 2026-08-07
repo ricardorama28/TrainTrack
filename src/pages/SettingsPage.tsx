@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { LogoWordmark } from '../components/ui/Logo';
 import { DataManagement } from '../components/settings/DataManagement';
 import { useAuth } from '../context/AuthContext';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, AlertTriangle } from 'lucide-react';
 import { getSyncState, onSyncStateChange, pushToCloud, type SyncState } from '../lib/cloudSync';
 import type { Settings } from '../types';
 
@@ -59,12 +60,14 @@ function AccountSection() {
         <div className="space-y-3">
           <div>
             <p className="text-sm text-gray-700 dark:text-gray-200">{user.email}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              {sync.error
-                ? '⚠️ Error de sincronización'
-                : sync.syncing
-                  ? 'Sincronizando…'
-                  : `Sincronizado ${relativeTime(sync.lastSyncedAt)}`}
+            <p className="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              {sync.error ? (
+                <><AlertTriangle size={12} className="text-red-500" /> Error de sincronización</>
+              ) : sync.syncing ? (
+                'Sincronizando…'
+              ) : (
+                `Sincronizado ${relativeTime(sync.lastSyncedAt)}`
+              )}
             </p>
             {sync.error && (
               <p className="text-xs text-red-500 mt-1 font-mono break-all">{sync.error}</p>
@@ -114,7 +117,7 @@ export function SettingsPage({ settings, onUpdate, onDataChange }: SettingsPageP
 
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Ajustes</h1>
+      <h1 className="text-2xl font-display font-bold tracking-tight text-gray-900 dark:text-white">Ajustes</h1>
 
       {/* Account & sync */}
       <AccountSection />
@@ -131,7 +134,7 @@ export function SettingsPage({ settings, onUpdate, onDataChange }: SettingsPageP
             >
               −
             </button>
-            <span className="text-2xl font-bold text-primary-600 dark:text-primary-400 w-8 text-center">
+            <span className="text-2xl font-display font-bold text-primary-600 dark:text-primary-400 w-8 text-center tabular-nums">
               {settings.weeklyGoal}
             </span>
             <button
@@ -254,8 +257,9 @@ export function SettingsPage({ settings, onUpdate, onDataChange }: SettingsPageP
       </Card>
 
       {/* About */}
-      <div className="text-center py-4 text-xs text-gray-400 dark:text-gray-600">
-        <p>TrainTrack v1.0</p>
+      <div className="flex flex-col items-center py-4 text-xs text-gray-400 dark:text-gray-600">
+        <LogoWordmark size={22} className="mb-2 opacity-80" />
+        <p>v1.1</p>
         <p className="mt-1">Todos los datos se guardan en tu dispositivo.</p>
       </div>
     </div>

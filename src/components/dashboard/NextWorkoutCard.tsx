@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Target, ArrowRight } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { suggestNextTarget } from '../../lib/progression';
 import { getExercisePerformances, getLastPerformance } from '../../lib/analytics';
@@ -24,21 +25,26 @@ function pickRoutine(routines: Routine[]): { routine: Routine; dayOffset: number
   return { routine: workouts[0], dayOffset: 0 };
 }
 
-/** Compact, human objective for one exercise. */
+/** Compact, human objective for one exercise (no emoji; a Target icon precedes it). */
 function shortObjective(s: ProgressionSuggestion): string {
   switch (s.action) {
     case 'increase-weight':
-      return `🎯 subí a ${s.targetWeight} kg`;
+      return `subí a ${s.targetWeight} kg`;
     case 'consolidate':
-      return `🎯 consolidá ${s.targetWeight} kg`;
+      return `consolidá ${s.targetWeight} kg`;
     case 'add-reps':
     case 'first-time':
       return s.targetTotalReps != null
-        ? `${s.targetWeight != null ? `${s.targetWeight} kg · ` : ''}🎯 ${s.targetTotalReps}+ reps`
+        ? `${s.targetWeight != null ? `${s.targetWeight} kg · ` : ''}${s.targetTotalReps}+ reps`
         : `${s.targetWeight != null ? `${s.targetWeight} kg` : ''}`;
     default:
       return s.targetWeight != null ? `${s.targetWeight} kg` : 'Repetir';
   }
+}
+
+/** Whether the objective merits the target icon (a real prescription, not plain repeat). */
+function hasTarget(s: ProgressionSuggestion): boolean {
+  return s.action !== 'repeat';
 }
 
 export function NextWorkoutCard({ logs, routines, settings }: NextWorkoutCardProps) {
@@ -70,9 +76,9 @@ export function NextWorkoutCard({ logs, routines, settings }: NextWorkoutCardPro
         </div>
         <button
           onClick={() => navigate('/routines')}
-          className="text-sm font-semibold text-primary-600 dark:text-primary-400"
+          className="inline-flex items-center gap-1 text-sm font-semibold text-primary-600 dark:text-primary-400"
         >
-          Empezar →
+          Empezar <ArrowRight size={15} strokeWidth={2.5} />
         </button>
       </div>
 
@@ -89,7 +95,10 @@ export function NextWorkoutCard({ logs, routines, settings }: NextWorkoutCardPro
                 className="w-full flex items-center justify-between gap-2 px-3 py-2 text-left"
               >
                 <span className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{row.name}</span>
-                <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 shrink-0">{shortObjective(row.suggestion)}</span>
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-gray-600 dark:text-gray-300 shrink-0 tabular-nums">
+                  {hasTarget(row.suggestion) && <Target size={12} className="text-primary-500" />}
+                  {shortObjective(row.suggestion)}
+                </span>
               </button>
               {isOpen && (
                 <div className="px-3 pb-2.5 -mt-0.5 space-y-0.5 text-xs text-gray-500 dark:text-gray-400">

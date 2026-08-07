@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { BarChart3 } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { EmptyState } from '../components/ui/EmptyState';
 import { MuscleVolumeChart } from '../components/charts/MuscleVolumeChart';
@@ -24,12 +25,12 @@ export function ProgressPage({ logs, exercises, settings }: ProgressPageProps) {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Progreso</h1>
+        <h1 className="text-2xl font-display font-bold tracking-tight text-gray-900 dark:text-white">Progreso</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">Análisis de tu entrenamiento</p>
       </div>
 
       {!hasData ? (
-        <EmptyState icon="📊" title="Todavía no hay datos" description="Registrá algunos entrenamientos para ver tu progreso, PRs y distribución muscular." />
+        <EmptyState icon={<BarChart3 />} title="Todavía no hay datos" description="Registrá algunos entrenamientos para ver tu progreso, PRs y distribución muscular." />
       ) : (
         <>
           <ProgressHighlights logs={logs} exercises={exercises} settings={settings} />

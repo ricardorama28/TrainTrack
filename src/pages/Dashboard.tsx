@@ -1,11 +1,14 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Dumbbell, ArrowRight, Timer, Calendar, ClipboardList } from 'lucide-react';
 import { StreakCard } from '../components/dashboard/StreakCard';
 import { WeeklySummary } from '../components/dashboard/WeeklySummary';
 import { MotivationalQuote } from '../components/dashboard/MotivationalQuote';
 import { UpcomingDays } from '../components/dashboard/UpcomingDays';
 import { NextWorkoutCard } from '../components/dashboard/NextWorkoutCard';
 import { ProgressHighlights } from '../components/dashboard/ProgressHighlights';
+import { Logo } from '../components/ui/Logo';
+import { IntensityMeter } from '../components/ui/IntensityMeter';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -23,13 +26,6 @@ interface DashboardProps {
   exercises: Exercise[];
   settings: Settings;
 }
-
-const FEELING_LABELS: Record<string, string> = {
-  easy:      '😊 Fácil',
-  normal:    '😐 Normal',
-  hard:      '😤 Difícil',
-  'very-hard': '🥵 Muy difícil',
-};
 
 export function Dashboard({ logs, routines, exercises, settings }: DashboardProps) {
   const navigate = useNavigate();
@@ -56,11 +52,14 @@ export function Dashboard({ logs, routines, exercises, settings }: DashboardProp
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-start justify-between">
-        <div>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">{formatDateLong(todayStr())}</p>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {firstName ? `¡Hola, ${firstName}!` : 'TrainTrack'}
-          </h1>
+        <div className="flex items-center gap-2.5">
+          <Logo size={34} className="text-primary-500 shrink-0" />
+          <div>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">{formatDateLong(todayStr())}</p>
+            <h1 className="text-2xl font-display font-bold tracking-tight text-gray-900 dark:text-white">
+              {firstName ? `¡Hola, ${firstName}!` : <>Train<span className="text-primary-500">Track</span></>}
+            </h1>
+          </div>
         </div>
         {!todayLog && (
           <Button size="sm" onClick={() => navigate('/calendar')}>
@@ -74,12 +73,12 @@ export function Dashboard({ logs, routines, exercises, settings }: DashboardProp
           onClick={() => navigate('/routines')}
           className="w-full flex items-center gap-3 rounded-2xl border border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20 px-4 py-3 text-left active:scale-[0.99] transition"
         >
-          <span className="text-2xl">🏋️</span>
+          <Dumbbell size={24} className="text-primary-600 dark:text-primary-400 shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">Entrenamiento en curso</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{activeSession.routineName}</p>
           </div>
-          <span className="text-sm font-semibold text-primary-600 dark:text-primary-400">Continuar →</span>
+          <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary-600 dark:text-primary-400">Continuar <ArrowRight size={15} strokeWidth={2.5} /></span>
         </button>
       )}
 
@@ -98,7 +97,7 @@ export function Dashboard({ logs, routines, exercises, settings }: DashboardProp
         <Card>
           <div className="flex items-center justify-between mb-2">
             <p className="text-[11px] font-bold uppercase tracking-wider text-primary-500">Series de trabajo · esta semana</p>
-            <button onClick={() => navigate('/progreso')} className="text-xs font-semibold text-primary-600 dark:text-primary-400">Ver más →</button>
+            <button onClick={() => navigate('/progreso')} className="inline-flex items-center gap-1 text-xs font-semibold text-primary-600 dark:text-primary-400">Ver más <ArrowRight size={13} strokeWidth={2.5} /></button>
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             {weekMuscles.map(m => (
@@ -127,10 +126,10 @@ export function Dashboard({ logs, routines, exercises, settings }: DashboardProp
               <Badge variant="green">{lastWorkout.routineName}</Badge>
             )}
             {lastWorkout.duration && (
-              <Badge variant="blue">⏱ {lastWorkout.duration} min</Badge>
+              <Badge variant="blue"><Timer size={12} /> {lastWorkout.duration} min</Badge>
             )}
             {lastWorkout.feeling && (
-              <Badge variant="gray">{FEELING_LABELS[lastWorkout.feeling]}</Badge>
+              <IntensityMeter value={lastWorkout.feeling} readOnly size="sm" />
             )}
           </div>
           {lastWorkout.notes && (
@@ -148,10 +147,10 @@ export function Dashboard({ logs, routines, exercises, settings }: DashboardProp
         <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">Accesos rápidos</h3>
         <div className="grid grid-cols-2 gap-2">
           <Button variant="secondary" onClick={() => navigate('/calendar')} fullWidth>
-            📅 Ver calendario
+            <Calendar size={16} /> Ver calendario
           </Button>
           <Button variant="secondary" onClick={() => navigate('/routines')} fullWidth>
-            📋 Mis rutinas
+            <ClipboardList size={16} /> Mis rutinas
           </Button>
         </div>
       </Card>

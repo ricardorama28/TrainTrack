@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Trophy, ArrowUp, Minus } from 'lucide-react';
 import { Card } from '../ui/Card';
 import {
   getExercisePerformances, getLatestPRs, detectTrend, detectStalled, getCurrentLoadBlock,
@@ -51,10 +52,10 @@ export function ProgressHighlights({ logs, exercises, settings }: ProgressHighli
 
   if (highlights.length === 0) return null;
 
-  const icon: Record<Kind, string> = { pr: '🏆', up: '↑', stalled: '→' };
+  const Icon: Record<Kind, typeof Trophy> = { pr: Trophy, up: ArrowUp, stalled: Minus };
   const color: Record<Kind, string> = {
-    pr: 'text-amber-600 dark:text-amber-400',
-    up: 'text-green-600 dark:text-green-400',
+    pr: 'text-accent-500 dark:text-accent-400',
+    up: 'text-primary-600 dark:text-primary-400',
     stalled: 'text-gray-500 dark:text-gray-400',
   };
 
@@ -62,15 +63,18 @@ export function ProgressHighlights({ logs, exercises, settings }: ProgressHighli
     <Card>
       <p className="text-[11px] font-bold uppercase tracking-wider text-primary-500 mb-2">Progreso</p>
       <div className="space-y-1.5">
-        {highlights.map((h, i) => (
-          <div key={i} className="flex items-center gap-2 text-sm">
-            <span className={`font-bold ${color[h.kind]}`}>{icon[h.kind]}</span>
-            <span className="font-medium text-gray-800 dark:text-gray-100 truncate">{h.name}</span>
-            <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto shrink-0">
-              {h.weight > 0 ? `${h.weight} kg · ` : ''}{h.text}
-            </span>
-          </div>
-        ))}
+        {highlights.map((h, i) => {
+          const I = Icon[h.kind];
+          return (
+            <div key={i} className="flex items-center gap-2 text-sm">
+              <I size={15} strokeWidth={2.5} className={`shrink-0 ${color[h.kind]}`} />
+              <span className="font-medium text-gray-800 dark:text-gray-100 truncate">{h.name}</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto shrink-0 tabular-nums">
+                {h.weight > 0 ? `${h.weight} kg · ` : ''}{h.text}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </Card>
   );

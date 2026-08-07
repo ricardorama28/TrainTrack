@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { SkipForward } from 'lucide-react';
 import { playBeep, vibrate } from '../../lib/feedback';
 
 interface RestTimerProps {
@@ -62,7 +63,7 @@ export function RestTimer({ endsAt, total, onDone, onSkip, onAdjust }: RestTimer
   const C = 2 * Math.PI * R;
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-gray-950/98 backdrop-blur-md p-6">
+    <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-ink-950/98 backdrop-blur-md p-6">
       <p className="text-gray-500 text-xs uppercase tracking-[0.2em] font-semibold mb-8">Descanso</p>
 
       <div className="relative w-56 h-56 mb-10">
@@ -73,7 +74,7 @@ export function RestTimer({ endsAt, total, onDone, onSkip, onAdjust }: RestTimer
             cy="60"
             r={R}
             fill="none"
-            stroke="#22c55e"
+            stroke="#84D717"
             strokeWidth="10"
             strokeLinecap="round"
             strokeDasharray={C}
@@ -106,9 +107,9 @@ export function RestTimer({ endsAt, total, onDone, onSkip, onAdjust }: RestTimer
 
       <button
         onClick={onSkip}
-        className="w-full max-w-xs py-3.5 rounded-2xl bg-primary-500 hover:bg-primary-600 text-white font-semibold text-base active:scale-95 transition shadow-lg shadow-primary-500/25"
+        className="w-full max-w-xs inline-flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-primary-500 hover:bg-primary-600 text-ink-950 font-semibold text-base active:scale-95 transition shadow-lg shadow-primary-500/25"
       >
-        Saltar descanso →
+        Saltar descanso <SkipForward size={18} className="fill-current" />
       </button>
     </div>
   );

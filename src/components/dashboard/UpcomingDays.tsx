@@ -1,3 +1,4 @@
+import { Check, Moon, Footprints, X } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { getUpcomingDays, formatDateShort, getDayName } from '../../lib/dates';
@@ -25,12 +26,12 @@ export function UpcomingDays({ logs, settings }: UpcomingDaysProps) {
 
           let badge: React.ReactNode = null;
           if (log) {
-            if (log.type === 'workout') badge = <Badge variant="green">✓ Entrenado{log.routineName ? ` · ${log.routineName}` : ''}</Badge>;
-            else if (log.type === 'rest') badge = <Badge variant="blue">💤 Descanso</Badge>;
-            else if (log.type === 'active-rest') badge = <Badge variant="teal">🚶 Desc. activo</Badge>;
-            else if (log.type === 'missed') badge = <Badge variant="red">✗ No realizado</Badge>;
+            if (log.type === 'workout') badge = <Badge variant="green"><Check size={12} strokeWidth={2.5} /> Entrenado{log.routineName ? ` · ${log.routineName}` : ''}</Badge>;
+            else if (log.type === 'rest') badge = <Badge variant="blue"><Moon size={12} /> Descanso</Badge>;
+            else if (log.type === 'active-rest') badge = <Badge variant="teal"><Footprints size={12} /> Desc. activo</Badge>;
+            else if (log.type === 'missed') badge = <Badge variant="red"><X size={12} strokeWidth={2.5} /> No realizado</Badge>;
           } else if (isPlannedRest) {
-            badge = <Badge variant="gray">💤 Descanso planeado</Badge>;
+            badge = <Badge variant="gray"><Moon size={12} /> Descanso planeado</Badge>;
           } else {
             badge = <Badge variant="gray">Pendiente</Badge>;
           }

@@ -1,9 +1,19 @@
 import { useState } from 'react';
+import { Dumbbell, Footprints, ArrowDown, Repeat, type LucideIcon } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { ExerciseItem } from './ExerciseItem';
 import { ExerciseForm } from './ExerciseForm';
 import type { Routine, ExerciseTemplate } from '../../types';
+
+const TYPE_OPTS: [Routine['type'], LucideIcon, string][] = [
+  ['workout', Dumbbell, 'Entrenamiento'],
+  ['active-rest', Footprints, 'Descanso activo'],
+];
+const ORDER_OPTS: ['sequential' | 'circuit', LucideIcon, string][] = [
+  ['sequential', ArrowDown, 'Series seguidas'],
+  ['circuit', Repeat, 'Circuito'],
+];
 
 function newId(): string {
   return typeof crypto !== 'undefined' && crypto.randomUUID
@@ -72,17 +82,17 @@ export function RoutineForm({ open, routine, onClose, onSave }: RoutineFormProps
           <div>
             <label className="label">Tipo</label>
             <div className="flex gap-3">
-              {([['workout', '💪 Entrenamiento'], ['active-rest', '🚶 Descanso activo']] as const).map(([val, label]) => (
+              {TYPE_OPTS.map(([val, Icon, label]) => (
                 <button
                   key={val}
                   onClick={() => setType(val)}
-                  className={`flex-1 py-2.5 px-3 rounded-xl border-2 text-sm font-medium transition-all ${
+                  className={`flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border-2 text-sm font-medium transition-all ${
                     type === val
                       ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
                       : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300'
                   }`}
                 >
-                  {label}
+                  <Icon size={15} /> {label}
                 </button>
               ))}
             </div>
@@ -91,17 +101,17 @@ export function RoutineForm({ open, routine, onClose, onSave }: RoutineFormProps
           <div>
             <label className="label">Orden de series (en la sesión guiada)</label>
             <div className="flex gap-3">
-              {([['sequential', '↓ Series seguidas'], ['circuit', '⟳ Circuito']] as const).map(([val, label]) => (
+              {ORDER_OPTS.map(([val, Icon, label]) => (
                 <button
                   key={val}
                   onClick={() => setSetOrder(val)}
-                  className={`flex-1 py-2.5 px-3 rounded-xl border-2 text-sm font-medium transition-all ${
+                  className={`flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border-2 text-sm font-medium transition-all ${
                     setOrder === val
                       ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
                       : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300'
                   }`}
                 >
-                  {label}
+                  <Icon size={15} /> {label}
                 </button>
               ))}
             </div>
