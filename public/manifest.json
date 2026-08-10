@@ -4,8 +4,8 @@
   "description": "Registra tus entrenamientos, rutinas y progreso personal",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#12121f",
-  "theme_color": "#7c3aed",
+  "background_color": "#0E1411",
+  "theme_color": "#0E1411",
   "orientation": "portrait",
   "categories": ["fitness", "health"],
   "icons": [

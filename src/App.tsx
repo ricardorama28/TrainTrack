@@ -5,6 +5,7 @@ import { Dashboard } from './pages/Dashboard';
 import { CalendarPage } from './pages/CalendarPage';
 import { RoutinesPage } from './pages/RoutinesPage';
 import { ExercisesPage } from './pages/ExercisesPage';
+import { ProgressPage } from './pages/ProgressPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { useWorkouts } from './hooks/useWorkouts';
 import { useRoutines } from './hooks/useRoutines';
@@ -80,6 +81,7 @@ function AppShell() {
                 <Dashboard
                   logs={logs}
                   routines={routines}
+                  exercises={exercises}
                   settings={settings}
                 />
               }
@@ -101,6 +103,7 @@ function AppShell() {
                 <RoutinesPage
                   routines={routines}
                   exercises={exercises}
+                  logs={logs}
                   onAdd={addRoutine}
                   onUpdate={updateRoutine}
                   onDelete={deleteRoutine}
@@ -120,6 +123,16 @@ function AppShell() {
                   routines={routines}
                   exercises={exercises}
                   onUpdateExercise={updateExercise}
+                />
+              }
+            />
+            <Route
+              path="/progreso"
+              element={
+                <ProgressPage
+                  logs={logs}
+                  exercises={exercises}
+                  settings={settings}
                 />
               }
             />

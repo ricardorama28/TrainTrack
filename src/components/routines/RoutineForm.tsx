@@ -1,9 +1,19 @@
 import { useState } from 'react';
+import { Dumbbell, Footprints, ArrowDown, Repeat, type LucideIcon } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { ExerciseItem } from './ExerciseItem';
 import { ExerciseForm } from './ExerciseForm';
 import type { Routine, ExerciseTemplate } from '../../types';
+
+const TYPE_OPTS: [Routine['type'], LucideIcon, string][] = [
+  ['workout', Dumbbell, 'Entrenamiento'],
+  ['active-rest', Footprints, 'Descanso activo'],
+];
+const ORDER_OPTS: ['sequential' | 'circuit', LucideIcon, string][] = [
+  ['sequential', ArrowDown, 'Series seguidas'],
+  ['circuit', Repeat, 'Circuito'],
+];
 
 function newId(): string {
   return typeof crypto !== 'undefined' && crypto.randomUUID
@@ -24,6 +34,7 @@ export function RoutineForm({ open, routine, onClose, onSave }: RoutineFormProps
   const [name, setName] = useState(routine?.name ?? '');
   const [description, setDescription] = useState(routine?.description ?? '');
   const [type, setType] = useState<'workout' | 'active-rest'>(routine?.type ?? 'workout');
+  const [setOrder, setSetOrder] = useState<'sequential' | 'circuit'>(routine?.setOrder ?? 'sequential');
   const [suggestedDays, setSuggestedDays] = useState<number[]>(routine?.suggestedDays ?? []);
   const [exercises, setExercises] = useState<ExerciseTemplate[]>(routine?.exercises ?? []);
   const [exerciseFormOpen, setExerciseFormOpen] = useState(false);
@@ -50,7 +61,7 @@ export function RoutineForm({ open, routine, onClose, onSave }: RoutineFormProps
 
   function handleSave() {
     if (!name.trim()) return;
-    onSave({ name: name.trim(), description: description || undefined, type, suggestedDays, exercises });
+    onSave({ name: name.trim(), description: description || undefined, type, setOrder, suggestedDays, exercises });
     onClose();
   }
 
@@ -71,20 +82,44 @@ export function RoutineForm({ open, routine, onClose, onSave }: RoutineFormProps
           <div>
             <label className="label">Tipo</label>
             <div className="flex gap-3">
-              {([['workout', '💪 Entrenamiento'], ['active-rest', '🚶 Descanso activo']] as const).map(([val, label]) => (
+              {TYPE_OPTS.map(([val, Icon, label]) => (
                 <button
                   key={val}
                   onClick={() => setType(val)}
-                  className={`flex-1 py-2.5 px-3 rounded-xl border-2 text-sm font-medium transition-all ${
+                  className={`flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border-2 text-sm font-medium transition-all ${
                     type === val
                       ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
                       : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300'
                   }`}
                 >
-                  {label}
+                  <Icon size={15} /> {label}
                 </button>
               ))}
             </div>
+          </div>
+
+          <div>
+            <label className="label">Orden de series (en la sesión guiada)</label>
+            <div className="flex gap-3">
+              {ORDER_OPTS.map(([val, Icon, label]) => (
+                <button
+                  key={val}
+                  onClick={() => setSetOrder(val)}
+                  className={`flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border-2 text-sm font-medium transition-all ${
+                    setOrder === val
+                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                      : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300'
+                  }`}
+                >
+                  <Icon size={15} /> {label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              {setOrder === 'sequential'
+                ? 'Todas las series de un ejercicio antes de pasar al siguiente.'
+                : '1ª serie de cada ejercicio, luego la 2ª de cada uno, etc.'}
+            </p>
           </div>
 
           <div>

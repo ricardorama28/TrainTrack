@@ -1,8 +1,12 @@
 import { useState } from 'react';
+import {
+  ClipboardList, FileText, Bot, Lightbulb, AlertTriangle, ArrowRight, ArrowLeft,
+  Check, Copy, Trash2, X, TrendingUp, type LucideIcon,
+} from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { parseRoutineText } from '../../lib/parser';
-import type { ParsedDay, ParsedExercise, MuscleGroup } from '../../types';
+import type { ParsedDay, ParsedExercise, MuscleGroup, ProgressionMethod, ExercisePriority, MetricKind } from '../../types';
 
 type Tab = 'json' | 'text' | 'prompt';
 type Phase = 'input' | 'preview';
@@ -12,6 +16,15 @@ type Phase = 'input' | 'preview';
 const VALID_MUSCLE_GROUPS = new Set<string>([
   'glutes', 'legs', 'back', 'chest', 'shoulders', 'arms', 'core', 'full-body', 'mobility', 'other',
 ]);
+
+const VALID_PROGRESSION_METHODS = new Set<string>(['double-progression', 'linear', 'none']);
+const VALID_PRIORITIES = new Set<string>(['primary', 'secondary', 'optional']);
+const VALID_METRIC_KINDS = new Set<string>(['loaded', 'bodyweight', 'isometric']);
+
+/** Read a numeric field, returning undefined when absent or not a finite number. */
+function num(v: unknown): number | undefined {
+  return typeof v === 'number' && Number.isFinite(v) ? v : undefined;
+}
 
 /**
  * Cleans up pasted JSON before parsing. Handles the common real-world cases:
@@ -77,15 +90,36 @@ function validateAndConvert(raw: unknown): ParsedDay[] {
         typeof e.muscleGroup === 'string' && VALID_MUSCLE_GROUPS.has(e.muscleGroup)
           ? (e.muscleGroup as MuscleGroup)
           : undefined;
+      const progressionMethod =
+        typeof e.progressionMethod === 'string' && VALID_PROGRESSION_METHODS.has(e.progressionMethod)
+          ? (e.progressionMethod as ProgressionMethod)
+          : undefined;
+      const priority =
+        typeof e.priority === 'string' && VALID_PRIORITIES.has(e.priority)
+          ? (e.priority as ExercisePriority)
+          : undefined;
+      const metricKind =
+        typeof e.metricKind === 'string' && VALID_METRIC_KINDS.has(e.metricKind)
+          ? (e.metricKind as MetricKind)
+          : undefined;
       return {
         name: e.name as string,
-        sets: typeof e.sets === 'number' ? e.sets : undefined,
+        sets: num(e.sets),
         reps: e.reps != null ? String(e.reps) : undefined,
-        weight: typeof e.weight === 'number' ? e.weight : undefined,
-        restSeconds: typeof e.restSeconds === 'number' ? e.restSeconds : undefined,
+        weight: num(e.weight),
+        restSeconds: num(e.restSeconds),
         muscleGroup,
         videoUrl: typeof e.videoUrl === 'string' && e.videoUrl ? e.videoUrl : undefined,
         notes: typeof e.notes === 'string' && e.notes ? e.notes : undefined,
+        // Progression (all optional; absent ones stay undefined and import unchanged)
+        progressionMethod: progressionMethod !== 'none' ? progressionMethod : undefined,
+        targetRepMin: num(e.targetRepMin),
+        targetRepMax: num(e.targetRepMax),
+        targetRir: num(e.targetRir),
+        weightIncrement: num(e.weightIncrement),
+        priority,
+        progressionNotes: typeof e.progressionNotes === 'string' && e.progressionNotes ? e.progressionNotes : undefined,
+        metricKind,
       };
     });
 
@@ -96,6 +130,18 @@ function validateAndConvert(raw: unknown): ParsedDay[] {
       exercises,
     };
   });
+}
+
+const PRIORITY_LABEL: Record<string, string> = { primary: 'Principal', secondary: 'Importante', optional: 'Opcional' };
+
+/** Compact read-only summary of an exercise's parsed progression, or '' if none. */
+function progressionSummary(ex: ParsedExercise): string {
+  const parts: string[] = [];
+  if (ex.progressionMethod === 'double-progression') parts.push('Doble progresión');
+  if (ex.targetRepMin != null && ex.targetRepMax != null) parts.push(`${ex.targetRepMin}–${ex.targetRepMax}`);
+  if (ex.targetRir != null) parts.push(`RIR ${ex.targetRir}`);
+  if (ex.priority) parts.push(PRIORITY_LABEL[ex.priority] ?? ex.priority);
+  return parts.join(' · ');
 }
 
 // ─── Static content ───────────────────────────────────────────────────────────
@@ -113,12 +159,18 @@ Formato requerido:
         {
           "name": "Hip Thrust",
           "sets": 4,
-          "reps": "10-12",
+          "reps": "8-12",
           "weight": null,
           "restSeconds": 90,
           "muscleGroup": "glutes",
           "videoUrl": "",
-          "notes": "Notas técnicas opcionales"
+          "notes": "Notas técnicas opcionales",
+          "progressionMethod": "double-progression",
+          "targetRepMin": 8,
+          "targetRepMax": 12,
+          "targetRir": 1,
+          "weightIncrement": 2.5,
+          "priority": "primary"
         }
       ]
     }
@@ -129,6 +181,15 @@ Valores válidos para "type": "workout" o "active-rest"
 Valores válidos para "muscleGroup": "glutes", "legs", "back", "chest", "shoulders", "arms", "core", "full-body", "mobility", "other"
 "weight" puede ser null para ejercicios de peso corporal o sin carga específica
 
+Campos de progresión (TODOS opcionales — omitilos en accesorios, movilidad o si no aplica):
+- "progressionMethod": "double-progression" o "none" (usá doble progresión en ejercicios principales con carga)
+- "targetRepMin" y "targetRepMax": números, el rango de reps objetivo (ej. 8 y 12)
+- "targetRir": número, RIR mínimo para subir carga (típico 1 o 2)
+- "weightIncrement": número, cuántos kg subir al completar el rango (ej. 2.5)
+- "priority": "primary" (principal), "secondary" (importante) u "optional" (opcional)
+- "metricKind": "loaded" (con carga), "bodyweight" (peso corporal) o "isometric" (isométrico); se infiere si se omite
+- "progressionNotes": texto con una regla especial (ej. "no subir si hay molestia lumbar")
+
 Mi solicitud de rutina:
 [ESCRIBE TU PEDIDO AQUÍ — ej: "Rutina de 3 días full body para principiante con mancuernas y banco"]`;
 
@@ -138,17 +199,17 @@ const EXAMPLE_JSON = `{
       "name": "Día A – Full Body",
       "type": "workout",
       "exercises": [
-        { "name": "Hip Thrust", "sets": 4, "reps": "10-12", "weight": 25, "restSeconds": 90, "muscleGroup": "glutes" },
-        { "name": "Sentadilla Goblet", "sets": 3, "reps": "12", "weight": 12, "restSeconds": 75, "muscleGroup": "legs" },
-        { "name": "Plancha", "sets": 3, "reps": "30 seg", "restSeconds": 60, "muscleGroup": "core" }
+        { "name": "Hip Thrust", "sets": 4, "reps": "8-12", "weight": 25, "restSeconds": 90, "muscleGroup": "glutes", "progressionMethod": "double-progression", "targetRepMin": 8, "targetRepMax": 12, "targetRir": 1, "weightIncrement": 2.5, "priority": "primary" },
+        { "name": "Sentadilla Goblet", "sets": 3, "reps": "10-12", "weight": 12, "restSeconds": 75, "muscleGroup": "legs", "progressionMethod": "double-progression", "targetRepMin": 10, "targetRepMax": 12, "targetRir": 2, "weightIncrement": 2.5, "priority": "primary" },
+        { "name": "Plancha", "sets": 3, "reps": "30 seg", "restSeconds": 60, "muscleGroup": "core", "metricKind": "isometric", "priority": "secondary" }
       ]
     },
     {
       "name": "Día B – Tren Superior",
       "type": "workout",
       "exercises": [
-        { "name": "Press Militar", "sets": 3, "reps": "10", "weight": 7.5, "restSeconds": 90, "muscleGroup": "shoulders" },
-        { "name": "Curl de Bíceps", "sets": 3, "reps": "12", "weight": 7.5, "restSeconds": 60, "muscleGroup": "arms" }
+        { "name": "Press Militar", "sets": 3, "reps": "8-10", "weight": 7.5, "restSeconds": 90, "muscleGroup": "shoulders", "progressionMethod": "double-progression", "targetRepMin": 8, "targetRepMax": 10, "targetRir": 1, "weightIncrement": 2.5, "priority": "primary" },
+        { "name": "Curl de Bíceps", "sets": 3, "reps": "12", "weight": 7.5, "restSeconds": 60, "muscleGroup": "arms", "priority": "optional" }
       ]
     }
   ]
@@ -260,10 +321,10 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
 
   // ── Render ───────────────────────────────────────────────────────────────────
 
-  const TABS: [Tab, string][] = [
-    ['json', '📋 JSON'],
-    ['text', '📝 Texto libre'],
-    ['prompt', '🤖 Prompt ChatGPT'],
+  const TABS: [Tab, LucideIcon, string][] = [
+    ['json', ClipboardList, 'JSON'],
+    ['text', FileText, 'Texto libre'],
+    ['prompt', Bot, 'Prompt ChatGPT'],
   ];
 
   return (
@@ -272,7 +333,7 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
         <div className="space-y-4">
           {/* Tab bar */}
           <div className="flex rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-            {TABS.map(([t, label]) => (
+            {TABS.map(([t, Icon, label]) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -282,7 +343,7 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
                     : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
               >
-                {label}
+                <Icon size={13} /> {label}
                 {t === 'json' && (
                   <span className={`text-[9px] px-1 rounded ${tab === 'json' ? 'bg-white/20 text-white' : 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'}`}>
                     Rec.
@@ -296,8 +357,8 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
           {tab === 'json' && (
             <div className="space-y-3">
               <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 text-xs text-blue-700 dark:text-blue-300">
-                <p className="font-medium mb-1">💡 Importación por JSON</p>
-                <p>Pegá el JSON generado con el prompt de la pestaña "🤖 Prompt ChatGPT". La estructura es validada antes de importar.</p>
+                <p className="inline-flex items-center gap-1 font-medium mb-1"><Lightbulb size={13} /> Importación por JSON</p>
+                <p>Pegá el JSON generado con el prompt de la pestaña "Prompt ChatGPT". La estructura es validada antes de importar.</p>
               </div>
               <div>
                 <label className="label">JSON de la rutina</label>
@@ -311,7 +372,7 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
               </div>
               {jsonError && (
                 <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-3 text-xs text-red-700 dark:text-red-300">
-                  <p className="font-medium">⚠️ Error de validación</p>
+                  <p className="inline-flex items-center gap-1 font-medium"><AlertTriangle size={13} /> Error de validación</p>
                   <p className="mt-0.5">{jsonError}</p>
                 </div>
               )}
@@ -327,7 +388,7 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
                 <div className="flex-1" />
                 <Button variant="secondary" onClick={resetAndClose}>Cancelar</Button>
                 <Button onClick={handleValidateJson} disabled={!jsonInput.trim()}>
-                  Validar y continuar →
+                  Validar y continuar <ArrowRight size={16} />
                 </Button>
               </div>
             </div>
@@ -337,7 +398,7 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
           {tab === 'text' && (
             <div className="space-y-3">
               <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-3 text-xs text-yellow-700 dark:text-yellow-300">
-                <p className="font-medium mb-1">⚠️ Importación por texto libre</p>
+                <p className="inline-flex items-center gap-1 font-medium mb-1"><AlertTriangle size={13} /> Importación por texto libre</p>
                 <p>El parser solo reconoce ejercicios con series/reps explícitas (ej: 4x10). Texto médico, objetivos y notas se ignoran automáticamente. Para mejores resultados usá el formato JSON.</p>
               </div>
               <div>
@@ -354,7 +415,7 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
                 <div className="flex-1" />
                 <Button variant="secondary" onClick={resetAndClose}>Cancelar</Button>
                 <Button onClick={handleParseText} disabled={!textInput.trim()}>
-                  Analizar texto →
+                  Analizar texto <ArrowRight size={16} />
                 </Button>
               </div>
             </div>
@@ -364,12 +425,12 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
           {tab === 'prompt' && (
             <div className="space-y-3">
               <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-3 text-xs text-purple-700 dark:text-purple-300">
-                <p className="font-medium mb-2">🤖 Cómo usar el prompt con ChatGPT</p>
+                <p className="inline-flex items-center gap-1 font-medium mb-2"><Bot size={13} /> Cómo usar el prompt con ChatGPT</p>
                 <ol className="list-decimal ml-4 space-y-0.5">
                   <li>Copiá el prompt de abajo con el botón "Copiar"</li>
                   <li>Pegalo en ChatGPT y reemplazá lo que está entre corchetes con tu pedido</li>
                   <li>ChatGPT va a responder solo con el JSON</li>
-                  <li>Copiá el JSON, volvé a la pestaña "📋 JSON" y pegalo allí</li>
+                  <li>Copiá el JSON, volvé a la pestaña "JSON" y pegalo allí</li>
                 </ol>
               </div>
               <div>
@@ -385,7 +446,7 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
                 <div className="flex-1" />
                 <Button variant="secondary" onClick={resetAndClose}>Cerrar</Button>
                 <Button onClick={handleCopyPrompt}>
-                  {copied ? '✓ ¡Copiado!' : '📋 Copiar prompt'}
+                  {copied ? <><Check size={16} /> ¡Copiado!</> : <><Copy size={16} /> Copiar prompt</>}
                 </Button>
               </div>
             </div>
@@ -397,9 +458,9 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
           <div className="flex items-center gap-2">
             <button
               onClick={handleBack}
-              className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
             >
-              ← Volver
+              <ArrowLeft size={15} /> Volver
             </button>
             <span className="text-sm text-gray-300 dark:text-gray-600">|</span>
             <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -432,15 +493,16 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
                     onChange={e => updateDay(dayIdx, { type: e.target.value as 'workout' | 'active-rest' })}
                     className="text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1"
                   >
-                    <option value="workout">💪 Entrenamiento</option>
-                    <option value="active-rest">🚶 Descanso activo</option>
+                    <option value="workout">Entrenamiento</option>
+                    <option value="active-rest">Descanso activo</option>
                   </select>
                   <button
                     onClick={() => deleteDay(dayIdx)}
-                    className="text-red-400 hover:text-red-600 text-sm leading-none"
+                    className="text-red-400 hover:text-red-600"
                     title="Eliminar día"
+                    aria-label="Eliminar día"
                   >
-                    🗑️
+                    <Trash2 size={15} />
                   </button>
                 </div>
 
@@ -469,10 +531,11 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
                         />
                         <button
                           onClick={() => deleteExercise(dayIdx, exIdx)}
-                          className="text-red-400 hover:text-red-600 text-xs leading-none"
+                          className="text-red-400 hover:text-red-600"
                           title="Eliminar ejercicio"
+                          aria-label="Eliminar ejercicio"
                         >
-                          ✕
+                          <X size={15} />
                         </button>
                       </div>
                       <div className="flex gap-2 flex-wrap">
@@ -512,6 +575,11 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
                       {ex.notes && (
                         <p className="text-xs text-gray-400 dark:text-gray-500 italic">{ex.notes}</p>
                       )}
+                      {progressionSummary(ex) && (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-300 text-[11px] font-medium px-1.5 py-0.5">
+                          <TrendingUp size={11} /> {progressionSummary(ex)}
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -528,10 +596,10 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
 
           <div className="flex gap-3 pt-2">
             <Button variant="secondary" onClick={handleBack} fullWidth>
-              ← Volver
+              <ArrowLeft size={16} /> Volver
             </Button>
             <Button onClick={handleConfirm} disabled={previewDays.length === 0} fullWidth>
-              ✓ Guardar {previewDays.length} rutina{previewDays.length !== 1 ? 's' : ''}
+              <Check size={16} /> Guardar {previewDays.length} rutina{previewDays.length !== 1 ? 's' : ''}
             </Button>
           </div>
         </div>

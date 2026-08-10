@@ -1,81 +1,69 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { SkipForward } from 'lucide-react';
+import { playBeep, vibrate } from '../../lib/feedback';
 
 interface RestTimerProps {
-  /** Initial countdown duration in seconds */
-  seconds: number;
+  /** Absolute epoch-ms timestamp when the rest finishes. */
+  endsAt: number;
+  /** Total rest duration in seconds (for the progress ring). */
+  total: number;
   onDone: () => void;
   onSkip: () => void;
+  /** Adjust the rest by ±seconds (parent owns endsAt so it can persist it). */
+  onAdjust: (deltaSeconds: number) => void;
 }
 
-/** Plays a short beep using the Web Audio API. Best-effort: silent on failure. */
-function playBeep() {
-  try {
-    const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    if (!Ctx) return;
-    const ctx = new Ctx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = 880;
-    gain.gain.setValueAtTime(0.15, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.4);
-    osc.onended = () => ctx.close();
-  } catch {
-    /* audio not available — ignore */
-  }
+function remainingFrom(endsAt: number): number {
+  return Math.max(0, Math.round((endsAt - Date.now()) / 1000));
 }
 
-function vibrate() {
-  try {
-    if ('vibrate' in navigator) navigator.vibrate([200, 100, 200]);
-  } catch {
-    /* ignore */
-  }
-}
-
-export function RestTimer({ seconds, onDone, onSkip }: RestTimerProps) {
-  const [total, setTotal] = useState(seconds);
-  const [remaining, setRemaining] = useState(seconds);
+/**
+ * Timestamp-based rest countdown. Because it derives the remaining time from an
+ * absolute `endsAt` (recomputed each tick and whenever the tab regains focus),
+ * it stays correct even when the browser throttles or suspends timers while the
+ * phone is locked or the app is backgrounded.
+ */
+export function RestTimer({ endsAt, total, onDone, onSkip, onAdjust }: RestTimerProps) {
+  const [remaining, setRemaining] = useState(() => remainingFrom(endsAt));
   const finishedRef = useRef(false);
 
-  // Countdown tick
   useEffect(() => {
-    const id = setInterval(() => {
-      setRemaining(r => Math.max(0, r - 1));
-    }, 1000);
-    return () => clearInterval(id);
-  }, []);
+    finishedRef.current = false;
 
-  // Fire completion exactly once when we hit zero
-  useEffect(() => {
-    if (remaining === 0 && !finishedRef.current) {
-      finishedRef.current = true;
-      playBeep();
-      vibrate();
-      const t = setTimeout(onDone, 600);
-      return () => clearTimeout(t);
-    }
-  }, [remaining, onDone]);
+    const tick = () => {
+      const r = remainingFrom(endsAt);
+      setRemaining(r);
+      if (r <= 0 && !finishedRef.current) {
+        finishedRef.current = true;
+        playBeep();
+        vibrate();
+        setTimeout(onDone, 500);
+      }
+    };
 
-  const adjust = useCallback((delta: number) => {
-    setRemaining(r => Math.max(0, r + delta));
-    setTotal(t => Math.max(0, t + delta));
-  }, []);
+    tick(); // recompute immediately (covers remounts / prop changes)
+    const id = setInterval(tick, 250);
+    const onVisible = () => { if (!document.hidden) tick(); };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
+  }, [endsAt, onDone]);
 
   const mins = Math.floor(remaining / 60);
   const secs = remaining % 60;
-  const pct = total > 0 ? remaining / total : 0;
+  const pct = total > 0 ? Math.min(1, remaining / total) : 0;
 
   // SVG progress ring
   const R = 52;
   const C = 2 * Math.PI * R;
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-gray-950/98 backdrop-blur-md p-6">
+    <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-ink-950/98 backdrop-blur-md p-6">
       <p className="text-gray-500 text-xs uppercase tracking-[0.2em] font-semibold mb-8">Descanso</p>
 
       <div className="relative w-56 h-56 mb-10">
@@ -86,12 +74,12 @@ export function RestTimer({ seconds, onDone, onSkip }: RestTimerProps) {
             cy="60"
             r={R}
             fill="none"
-            stroke="#22c55e"
+            stroke="#84D717"
             strokeWidth="10"
             strokeLinecap="round"
             strokeDasharray={C}
             strokeDashoffset={C * (1 - pct)}
-            style={{ transition: 'stroke-dashoffset 1s linear' }}
+            style={{ transition: 'stroke-dashoffset 0.25s linear' }}
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -104,13 +92,13 @@ export function RestTimer({ seconds, onDone, onSkip }: RestTimerProps) {
 
       <div className="flex items-center gap-3 mb-8">
         <button
-          onClick={() => adjust(-30)}
+          onClick={() => onAdjust(-30)}
           className="px-5 py-3 rounded-xl bg-white/8 text-gray-300 text-sm font-semibold hover:bg-white/15 active:scale-95 transition border border-white/10"
         >
           −30s
         </button>
         <button
-          onClick={() => adjust(30)}
+          onClick={() => onAdjust(30)}
           className="px-5 py-3 rounded-xl bg-white/8 text-gray-300 text-sm font-semibold hover:bg-white/15 active:scale-95 transition border border-white/10"
         >
           +30s
@@ -119,9 +107,9 @@ export function RestTimer({ seconds, onDone, onSkip }: RestTimerProps) {
 
       <button
         onClick={onSkip}
-        className="w-full max-w-xs py-3.5 rounded-2xl bg-primary-500 hover:bg-primary-600 text-white font-semibold text-base active:scale-95 transition shadow-lg shadow-primary-500/25"
+        className="w-full max-w-xs inline-flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-primary-500 hover:bg-primary-600 text-ink-950 font-semibold text-base active:scale-95 transition shadow-lg shadow-primary-500/25"
       >
-        Saltar descanso →
+        Saltar descanso <SkipForward size={18} className="fill-current" />
       </button>
     </div>
   );

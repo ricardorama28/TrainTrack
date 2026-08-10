@@ -1,11 +1,14 @@
 import { useState } from 'react';
+import { Download, Plus, Dumbbell, ClipboardList } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
 import { RoutineCard } from '../components/routines/RoutineCard';
 import { RoutineForm } from '../components/routines/RoutineForm';
 import { ImportRoutine } from '../components/routines/ImportRoutine';
 import { WorkoutSession } from '../components/workout/WorkoutSession';
-import type { Routine, ParsedDay, ExerciseTemplate, Exercise, ExerciseCategory, MuscleGroup, WorkoutLog } from '../types';
+import { parseRepRange } from '../lib/progression';
+import { storage } from '../lib/storage';
+import type { Routine, ParsedDay, ExerciseTemplate, Exercise, ExerciseCategory, MuscleGroup, WorkoutLog, ActiveSession } from '../types';
 
 function newId(): string {
   return typeof crypto !== 'undefined' && crypto.randomUUID
@@ -31,13 +34,22 @@ interface RoutinesPageProps {
   getOrCreateExercise: (name: string, defaults?: Partial<Omit<Exercise, 'id' | 'createdAt' | 'nameLower' | 'name'>>, options?: { enrich?: boolean }) => Exercise;
   onSaveLog: (log: Omit<WorkoutLog, 'id'>) => void;
   autoEnrich: boolean;
+  logs: WorkoutLog[];
 }
 
-export function RoutinesPage({ routines, exercises, onAdd, onUpdate, onDelete, onDuplicate, onMove, getOrCreateExercise, onSaveLog, autoEnrich }: RoutinesPageProps) {
+export function RoutinesPage({ routines, exercises, onAdd, onUpdate, onDelete, onDuplicate, onMove, getOrCreateExercise, onSaveLog, autoEnrich, logs }: RoutinesPageProps) {
   const [formOpen, setFormOpen] = useState(false);
   const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [activeRoutine, setActiveRoutine] = useState<Routine | null>(null);
+  const [resumeSession, setResumeSession] = useState<ActiveSession | null>(() => storage.getActiveSession());
+  const [resumeOpen, setResumeOpen] = useState(false);
+
+  function closeSession() {
+    setActiveRoutine(null);
+    setResumeOpen(false);
+    setResumeSession(null);
+  }
 
   function handleSaveRoutine(data: Omit<Routine, 'id' | 'createdAt'>) {
     if (editingRoutine) {
@@ -51,13 +63,24 @@ export function RoutinesPage({ routines, exercises, onAdd, onUpdate, onDelete, o
   function handleImport(days: ParsedDay[]) {
     for (const day of days) {
       const exercises: ExerciseTemplate[] = day.exercises.map(ex => {
-        // Create or reuse the exercise in the global library, then link by id
+        // Create or reuse the exercise in the global library, then link by id.
+        // metricKind is an exercise-nature attribute → only applied to newly
+        // created library entries (getOrCreate returns existing ones unchanged).
         const libExercise = getOrCreateExercise(ex.name, {
           muscleGroup: ex.muscleGroup,
+          metricKind: ex.metricKind,
           videoUrl: ex.videoUrl,
           technicalNotes: ex.notes,
           category: categoryFromMuscle(ex.muscleGroup),
         }, { enrich: autoEnrich });
+
+        // Derive an explicit rep range from `reps` (e.g. "8-12") when not given,
+        // so double progression works out of the box. Only when it's a real range.
+        const derived = ex.targetRepMin == null && ex.targetRepMax == null
+          ? parseRepRange(ex.reps)
+          : undefined;
+        const targetRepMin = ex.targetRepMin ?? (derived && derived.min < derived.max ? derived.min : undefined);
+        const targetRepMax = ex.targetRepMax ?? (derived && derived.min < derived.max ? derived.max : undefined);
 
         return {
           id: newId(),
@@ -70,6 +93,14 @@ export function RoutinesPage({ routines, exercises, onAdd, onUpdate, onDelete, o
           videoUrl: ex.videoUrl ?? libExercise.referenceUrl ?? libExercise.videoUrl,
           muscleGroup: ex.muscleGroup ?? libExercise.muscleGroup,
           notes: ex.notes,
+          // Progression (prescription) carried from the import
+          progressionMethod: ex.progressionMethod,
+          targetRepMin,
+          targetRepMax,
+          targetRir: ex.targetRir,
+          weightIncrement: ex.weightIncrement,
+          priority: ex.priority,
+          progressionNotes: ex.progressionNotes,
         };
       });
 
@@ -85,26 +116,43 @@ export function RoutinesPage({ routines, exercises, onAdd, onUpdate, onDelete, o
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Rutinas</h1>
+        <h1 className="text-2xl font-display font-bold tracking-tight text-gray-900 dark:text-white">Rutinas</h1>
         <div className="flex gap-2">
           <Button variant="secondary" size="sm" onClick={() => setImportOpen(true)}>
-            📥 Importar
+            <Download size={15} /> Importar
           </Button>
           <Button size="sm" onClick={() => { setEditingRoutine(null); setFormOpen(true); }}>
-            + Nueva
+            <Plus size={15} /> Nueva
           </Button>
         </div>
       </div>
 
+      {resumeSession && !resumeOpen && !activeRoutine && (
+        <div className="flex items-center gap-3 rounded-2xl border border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20 px-4 py-3">
+          <Dumbbell size={24} className="text-primary-600 dark:text-primary-400 shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">Entrenamiento en curso</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{resumeSession.routineName}</p>
+          </div>
+          <Button size="sm" onClick={() => setResumeOpen(true)}>Retomar</Button>
+          <button
+            onClick={() => { storage.clearActiveSession(); setResumeSession(null); }}
+            className="text-xs text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 px-1"
+          >
+            Descartar
+          </button>
+        </div>
+      )}
+
       {routines.length === 0 ? (
         <EmptyState
-          icon="📋"
+          icon={<ClipboardList />}
           title="No hay rutinas todavía"
           description="Creá tu primera rutina o importá una desde texto."
           action={
             <div className="flex gap-3">
               <Button variant="secondary" onClick={() => setImportOpen(true)}>
-                📥 Importar rutina
+                <Download size={16} /> Importar rutina
               </Button>
               <Button onClick={() => { setEditingRoutine(null); setFormOpen(true); }}>
                 + Crear rutina
@@ -147,14 +195,23 @@ export function RoutinesPage({ routines, exercises, onAdd, onUpdate, onDelete, o
         onImport={handleImport}
       />
 
-      {activeRoutine && (
+      {activeRoutine ? (
         <WorkoutSession
           routine={activeRoutine}
           exercises={exercises}
-          onCancel={() => setActiveRoutine(null)}
-          onFinish={(log) => { onSaveLog(log); setActiveRoutine(null); }}
+          logs={logs}
+          onCancel={closeSession}
+          onFinish={(log) => { onSaveLog(log); closeSession(); }}
         />
-      )}
+      ) : resumeOpen && resumeSession ? (
+        <WorkoutSession
+          resume={resumeSession}
+          exercises={exercises}
+          logs={logs}
+          onCancel={closeSession}
+          onFinish={(log) => { onSaveLog(log); closeSession(); }}
+        />
+      ) : null}
     </div>
   );
 }

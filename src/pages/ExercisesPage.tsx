@@ -1,4 +1,8 @@
 import { useState, useMemo } from 'react';
+import {
+  Dumbbell, Target, Pencil, Clapperboard, Check, Search, ChevronUp, ChevronDown,
+  BookOpen, Users, ListOrdered, AlertTriangle, Shield, Wrench, StickyNote, TrendingUp,
+} from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -163,7 +167,7 @@ export function ExercisesPage({ logs, routines, exercises, onUpdateExercise }: E
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Ejercicios</h1>
+      <h1 className="text-2xl font-display font-bold tracking-tight text-gray-900 dark:text-white">Ejercicios</h1>
 
       <input
         type="search"
@@ -175,7 +179,7 @@ export function ExercisesPage({ logs, routines, exercises, onUpdateExercise }: E
 
       {filtered.length === 0 && (
         <EmptyState
-          icon="💪"
+          icon={<Dumbbell />}
           title="Sin ejercicios todavía"
           description="Los ejercicios aparecen acá cuando importás o creás una rutina, o registrás un entrenamiento."
         />
@@ -201,23 +205,24 @@ export function ExercisesPage({ logs, routines, exercises, onUpdateExercise }: E
                     )}
                   </div>
                   {lib?.primaryMuscles && lib.primaryMuscles.length > 0 && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">💪 {lib.primaryMuscles.join(' · ')}</p>
+                    <p className="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-1"><Dumbbell size={12} /> {lib.primaryMuscles.join(' · ')}</p>
                   )}
                   {lib?.description && (
                     <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">{lib.description}</p>
                   )}
                   {lib?.purpose && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 italic">🎯 {lib.purpose}</p>
+                    <p className="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-0.5 italic"><Target size={12} /> {lib.purpose}</p>
                   )}
                 </div>
                 <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                  {row.lastWeight !== undefined && <Badge variant="green">🏋️ {row.lastWeight} kg</Badge>}
+                  {row.lastWeight !== undefined && <Badge variant="green"><Dumbbell size={12} /> {row.lastWeight} kg</Badge>}
                   {lib && (
                     <button
                       onClick={() => setEditing(lib)}
-                      className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm"
+                      className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
                       title="Editar"
-                    >✏️</button>
+                      aria-label="Editar"
+                    ><Pencil size={15} /></button>
                   )}
                 </div>
               </div>
@@ -230,9 +235,9 @@ export function ExercisesPage({ logs, routines, exercises, onUpdateExercise }: E
                       href={row.referenceUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
+                      className="inline-flex items-center gap-1 text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
                     >
-                      🎬 Ver referencia
+                      <Clapperboard size={13} /> Ver referencia
                     </a>
                     {suggested && (
                       <>
@@ -240,9 +245,9 @@ export function ExercisesPage({ logs, routines, exercises, onUpdateExercise }: E
                         {lib && (
                           <button
                             onClick={() => acceptReference(lib)}
-                            className="text-xs text-primary-600 dark:text-primary-400 hover:underline"
+                            className="inline-flex items-center gap-1 text-xs text-primary-600 dark:text-primary-400 hover:underline"
                           >
-                            ✓ Aceptar
+                            <Check size={12} /> Aceptar
                           </button>
                         )}
                       </>
@@ -263,9 +268,9 @@ export function ExercisesPage({ logs, routines, exercises, onUpdateExercise }: E
                       href={ytSearchUrl(row.name)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs text-primary-600 dark:text-primary-400 hover:underline"
+                      className="inline-flex items-center gap-1 text-xs text-primary-600 dark:text-primary-400 hover:underline"
                     >
-                      🔎 Buscar en YouTube
+                      <Search size={13} /> Buscar en YouTube
                     </a>
                   </>
                 )}
@@ -276,7 +281,7 @@ export function ExercisesPage({ logs, routines, exercises, onUpdateExercise }: E
                 onClick={() => setExpanded(isOpen ? null : row.name)}
                 className="mt-2 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
-                {isOpen ? 'Ocultar detalle ▲' : 'Ver detalle ▼'}
+                {isOpen ? <>Ocultar detalle <ChevronUp size={15} /></> : <>Ver detalle <ChevronDown size={15} /></>}
               </button>
 
               {/* Expanded detail */}
@@ -308,7 +313,7 @@ export function ExercisesPage({ logs, routines, exercises, onUpdateExercise }: E
                       <p className="text-xs text-gray-500 dark:text-gray-400">
                         Sin descripción todavía. Podés enriquecer este ejercicio desde
                         <span className="font-medium text-gray-600 dark:text-gray-300"> Ajustes → Enriquecer ejercicios existentes</span>
-                        {lib ? ', o editarlo manualmente con el lápiz ✏️.' : '.'}
+                        {lib ? ', o editarlo manualmente con el ícono de editar.' : '.'}
                       </p>
                     </div>
                   )}
@@ -316,7 +321,7 @@ export function ExercisesPage({ logs, routines, exercises, onUpdateExercise }: E
                   {/* What it is */}
                   {lib?.description && (
                     <div>
-                      <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">📖 Qué es</p>
+                      <p className="inline-flex items-center gap-1 text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1"><BookOpen size={13} /> Qué es</p>
                       <p className="text-sm text-gray-600 dark:text-gray-300">{lib.description}</p>
                     </div>
                   )}
@@ -324,7 +329,7 @@ export function ExercisesPage({ logs, routines, exercises, onUpdateExercise }: E
                   {/* What it's for */}
                   {lib?.purpose && (
                     <div>
-                      <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">🎯 Para qué sirve</p>
+                      <p className="inline-flex items-center gap-1 text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1"><Target size={13} /> Para qué sirve</p>
                       <p className="text-sm text-gray-600 dark:text-gray-300">{lib.purpose}</p>
                     </div>
                   )}
@@ -342,13 +347,13 @@ export function ExercisesPage({ logs, routines, exercises, onUpdateExercise }: E
                     <div className="space-y-1.5">
                       {lib?.primaryMuscles && lib.primaryMuscles.length > 0 && (
                         <div className="flex items-start gap-1.5 flex-wrap">
-                          <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">💪 Principales:</span>
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-gray-600 dark:text-gray-300"><Dumbbell size={12} /> Principales:</span>
                           {lib.primaryMuscles.map(m => <Badge key={m} variant="purple">{m}</Badge>)}
                         </div>
                       )}
                       {lib?.secondaryMuscles && lib.secondaryMuscles.length > 0 && (
                         <div className="flex items-start gap-1.5 flex-wrap">
-                          <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">🤝 Secundarios:</span>
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-gray-600 dark:text-gray-300"><Users size={12} /> Secundarios:</span>
                           {lib.secondaryMuscles.map(m => <Badge key={m} variant="gray">{m}</Badge>)}
                         </div>
                       )}
@@ -356,20 +361,20 @@ export function ExercisesPage({ logs, routines, exercises, onUpdateExercise }: E
                   )}
 
                   {lib?.simpleInstructions && lib.simpleInstructions.length > 0 && (
-                    <DetailList title="📋 Instrucciones" items={lib.simpleInstructions} ordered />
+                    <DetailList title="Instrucciones" icon={<ListOrdered size={13} />} items={lib.simpleInstructions} ordered />
                   )}
                   {lib?.commonMistakes && lib.commonMistakes.length > 0 && (
-                    <DetailList title="⚠️ Errores comunes" items={lib.commonMistakes} />
+                    <DetailList title="Errores comunes" icon={<AlertTriangle size={13} />} items={lib.commonMistakes} />
                   )}
                   {lib?.safetyNotes && (
                     <div>
-                      <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">🛡️ Seguridad</p>
+                      <p className="inline-flex items-center gap-1 text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1"><Shield size={13} /> Seguridad</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">{lib.safetyNotes}</p>
                     </div>
                   )}
                   {lib?.equipment && lib.equipment.length > 0 && (
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">🧰 Equipo:</span>
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-gray-600 dark:text-gray-300"><Wrench size={12} /> Equipo:</span>
                       {lib.equipment.map(eq => <Badge key={eq} variant="blue">{eq}</Badge>)}
                     </div>
                   )}
@@ -377,7 +382,7 @@ export function ExercisesPage({ logs, routines, exercises, onUpdateExercise }: E
                   {/* Personal notes */}
                   {lib?.technicalNotes && (
                     <div>
-                      <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">📝 Notas personales</p>
+                      <p className="inline-flex items-center gap-1 text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1"><StickyNote size={13} /> Notas personales</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-pre-line">{lib.technicalNotes}</p>
                     </div>
                   )}
@@ -385,9 +390,9 @@ export function ExercisesPage({ logs, routines, exercises, onUpdateExercise }: E
                   {row.totalSessions > 0 && (
                     <button
                       onClick={() => setSelectedExercise(row.name)}
-                      className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
+                      className="inline-flex items-center gap-1 text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
                     >
-                      📈 Ver historial de progreso
+                      <TrendingUp size={13} /> Ver historial de progreso
                     </button>
                   )}
                 </div>
@@ -418,10 +423,10 @@ export function ExercisesPage({ logs, routines, exercises, onUpdateExercise }: E
 
 // ─── Small presentational helper ──────────────────────────────────────────────
 
-function DetailList({ title, items, ordered }: { title: string; items: string[]; ordered?: boolean }) {
+function DetailList({ title, icon, items, ordered }: { title: string; icon?: React.ReactNode; items: string[]; ordered?: boolean }) {
   return (
     <div>
-      <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">{title}</p>
+      <p className="inline-flex items-center gap-1 text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">{icon} {title}</p>
       {ordered ? (
         <ol className="list-decimal ml-4 space-y-0.5 text-xs text-gray-500 dark:text-gray-400">
           {items.map((it, i) => <li key={i}>{it}</li>)}
@@ -509,8 +514,8 @@ function ExerciseEditModal({ exercise, onClose, onSave }: ExerciseEditModalProps
           <label className="label">Link de referencia (video/imagen)</label>
           <input className="input" type="url" value={referenceUrl} onChange={e => setReferenceUrl(e.target.value)} placeholder="https://youtube.com/..." />
           <div className="flex gap-3 mt-1.5">
-            <a href={ytSearchUrl(name)} target="_blank" rel="noopener noreferrer" className="text-xs text-primary-600 dark:text-primary-400 hover:underline">🔎 Buscar en YouTube</a>
-            <a href={googleSearchUrl(name)} target="_blank" rel="noopener noreferrer" className="text-xs text-primary-600 dark:text-primary-400 hover:underline">🔎 Buscar en Google</a>
+            <a href={ytSearchUrl(name)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary-600 dark:text-primary-400 hover:underline"><Search size={12} /> Buscar en YouTube</a>
+            <a href={googleSearchUrl(name)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary-600 dark:text-primary-400 hover:underline"><Search size={12} /> Buscar en Google</a>
           </div>
         </div>
         <div>

@@ -15,21 +15,35 @@ const MONTHS_ES_SHORT = [
 const DAYS_ES = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 const DAYS_ES_SHORT = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
-/** Parse a YYYY-MM-DD string into a local Date (avoids UTC offset issues) */
-export function parseLocalDate(dateStr: string): Date {
-  const [y, m, d] = dateStr.split('-').map(Number);
-  return new Date(y, m - 1, d);
+/** Fallback shown when a date string is missing or malformed */
+const INVALID_DATE_LABEL = '—';
+
+/**
+ * Parse a YYYY-MM-DD string into a local Date (avoids UTC offset issues).
+ * Returns null for null/undefined/non-string or malformed input instead of
+ * throwing, and tolerates ISO strings ("YYYY-MM-DDTHH:MM:SSZ") by taking the
+ * leading date portion. This prevents a single bad/legacy log from crashing
+ * the whole app (there is no value worth a thrown exception here).
+ */
+export function parseLocalDate(dateStr?: string | null): Date | null {
+  if (typeof dateStr !== 'string' || dateStr.length === 0) return null;
+  const [y, m, d] = dateStr.slice(0, 10).split('-').map(Number);
+  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return null;
+  const date = new Date(y, m - 1, d);
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
 /** Format a YYYY-MM-DD string as "lunes, 23 de junio" */
-export function formatDateLong(dateStr: string): string {
+export function formatDateLong(dateStr?: string | null): string {
   const d = parseLocalDate(dateStr);
+  if (!d) return INVALID_DATE_LABEL;
   return `${DAYS_ES[d.getDay()]}, ${d.getDate()} de ${MONTHS_ES[d.getMonth()]}`;
 }
 
 /** Format a YYYY-MM-DD string as "23 jun" */
-export function formatDateShort(dateStr: string): string {
+export function formatDateShort(dateStr?: string | null): string {
   const d = parseLocalDate(dateStr);
+  if (!d) return INVALID_DATE_LABEL;
   return `${d.getDate()} ${MONTHS_ES_SHORT[d.getMonth()]}`;
 }
 
@@ -79,6 +93,7 @@ export function getDaysInMonth(year: number, month: number): string[] {
 /** Returns day-of-week short name for a date string */
 export function getDayName(dateStr: string, short = true): string {
   const d = parseLocalDate(dateStr);
+  if (!d) return INVALID_DATE_LABEL;
   return short ? DAYS_ES_SHORT[d.getDay()] : DAYS_ES[d.getDay()];
 }
 

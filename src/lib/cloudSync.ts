@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { storage } from './storage';
+import { storage, sanitizeWorkoutLogs } from './storage';
 import type { AppData } from '../types';
 
 const TABLE = 'user_data';
@@ -110,7 +110,7 @@ export async function pullFromCloud(userId: string): Promise<CloudData> {
 
     if (data) {
       const appData: AppData = {
-        workoutLogs: Array.isArray(data.workout_logs) ? data.workout_logs : [],
+        workoutLogs: sanitizeWorkoutLogs(data.workout_logs),
         routines: Array.isArray(data.routines) ? data.routines : [],
         exercises: Array.isArray(data.exercises) ? data.exercises : [],
         settings: data.settings ?? undefined,

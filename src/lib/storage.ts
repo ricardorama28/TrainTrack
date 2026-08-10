@@ -1,14 +1,60 @@
-import type { WorkoutLog, Routine, Settings, AppData, Exercise } from '../types';
+import type { WorkoutLog, WorkoutType, Routine, Settings, AppData, Exercise, ActiveSession } from '../types';
+
+// ─── Sanitization ──────────────────────────────────────────────────────────────
+// Defensive layer: a single malformed/legacy log (e.g. a missing `date` or
+// `exercises`) must never reach React and crash the whole app. We repair what we
+// safely can and drop entries that are beyond repair.
+
+const VALID_WORKOUT_TYPES: WorkoutType[] = ['workout', 'rest', 'active-rest', 'missed'];
+
+/** Normalize a value into a YYYY-MM-DD string, or null if it can't be one. */
+function normalizeDate(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const d = value.slice(0, 10); // tolerate ISO "YYYY-MM-DDTHH:MM:SSZ"
+  return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null;
+}
+
+/**
+ * Coerce arbitrary stored/cloud data into well-formed WorkoutLog[]:
+ * - drops entries without a valid date (the crash vector),
+ * - guarantees `exercises` is an array,
+ * - guarantees a valid `type` (defaults to 'workout').
+ */
+export function sanitizeWorkoutLogs(raw: unknown): WorkoutLog[] {
+  if (!Array.isArray(raw)) return [];
+  const out: WorkoutLog[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue;
+    const log = item as Record<string, unknown>;
+    const date = normalizeDate(log.date);
+    if (!date) continue; // unrepairable — skip
+    const type = VALID_WORKOUT_TYPES.includes(log.type as WorkoutType)
+      ? (log.type as WorkoutType)
+      : 'workout';
+    out.push({
+      ...(log as object),
+      id: typeof log.id === 'string' && log.id ? log.id : `${date}-${out.length}`,
+      date,
+      type,
+      exercises: Array.isArray(log.exercises) ? log.exercises : [],
+    } as WorkoutLog);
+  }
+  return out;
+}
 
 // ─── Storage Keys ─────────────────────────────────────────────────────────────
 
 const KEYS = {
-  WORKOUT_LOGS: 'traintrack_workouts',
-  ROUTINES:     'traintrack_routines',
-  EXERCISES:    'traintrack_exercises',
-  SETTINGS:     'traintrack_settings',
-  INITIALIZED:  'traintrack_initialized',
+  WORKOUT_LOGS:   'traintrack_workouts',
+  ROUTINES:       'traintrack_routines',
+  EXERCISES:      'traintrack_exercises',
+  SETTINGS:       'traintrack_settings',
+  INITIALIZED:    'traintrack_initialized',
+  ACTIVE_SESSION: 'traintrack_active_session',
 } as const;
+
+/** An in-progress session older than this is considered stale and discarded. */
+const ACTIVE_SESSION_TTL_MS = 18 * 60 * 60 * 1000; // 18 h
 
 // ─── Default Values ───────────────────────────────────────────────────────────
 
@@ -19,6 +65,8 @@ export const defaultSettings: Settings = {
   darkMode: true,
   autoEnrich: true,       // enrich from local KB by default (no network needed)
   externalSearch: false,  // external search is opt-in (requires backend)
+  defaultWeightIncrement: 2.5,
+  stalledSessionThreshold: 3,
 };
 
 // ─── Generic Helpers ─────────────────────────────────────────────────────────
@@ -64,7 +112,7 @@ function set<T>(key: string, value: T): void {
 
 export const storage = {
   // Workout logs
-  getWorkoutLogs: (): WorkoutLog[] => get<WorkoutLog[]>(KEYS.WORKOUT_LOGS, []),
+  getWorkoutLogs: (): WorkoutLog[] => sanitizeWorkoutLogs(get<unknown>(KEYS.WORKOUT_LOGS, [])),
   setWorkoutLogs: (logs: WorkoutLog[]): void => set(KEYS.WORKOUT_LOGS, logs),
 
   // Routines
@@ -83,6 +131,30 @@ export const storage = {
   isInitialized: (): boolean => localStorage.getItem(KEYS.INITIALIZED) === 'true',
   markInitialized: (): void => localStorage.setItem(KEYS.INITIALIZED, 'true'),
 
+  // Active (in-progress) workout session — local & ephemeral, not synced.
+  getActiveSession: (): ActiveSession | null => {
+    const s = get<ActiveSession | null>(KEYS.ACTIVE_SESSION, null);
+    if (!s || typeof s !== 'object' || !Array.isArray(s.session)) return null;
+    // Discard stale sessions so we don't offer to resume an old workout.
+    if (typeof s.savedAt !== 'number' || Date.now() - s.savedAt > ACTIVE_SESSION_TTL_MS) {
+      localStorage.removeItem(KEYS.ACTIVE_SESSION);
+      return null;
+    }
+    return s;
+  },
+  setActiveSession: (s: ActiveSession): void => {
+    // Direct write (no notify): this is high-frequency, local-only state and
+    // must not trigger cloud-sync pushes.
+    try {
+      localStorage.setItem(KEYS.ACTIVE_SESSION, JSON.stringify(s));
+    } catch (e) {
+      console.error('Active session write failed:', e);
+    }
+  },
+  clearActiveSession: (): void => {
+    localStorage.removeItem(KEYS.ACTIVE_SESSION);
+  },
+
   // Export / Import
   exportAll: (): string => {
     const data: AppData = {
@@ -90,13 +162,13 @@ export const storage = {
       routines:    storage.getRoutines(),
       exercises:   storage.getExercises(),
       settings:    storage.getSettings(),
-      version:     '1.1',
+      version:     '1.2',
     };
     return JSON.stringify(data, null, 2);
   },
 
   importAll: (data: AppData): void => {
-    if (Array.isArray(data.workoutLogs)) storage.setWorkoutLogs(data.workoutLogs);
+    if (Array.isArray(data.workoutLogs)) storage.setWorkoutLogs(sanitizeWorkoutLogs(data.workoutLogs));
     if (Array.isArray(data.routines))    storage.setRoutines(data.routines);
     // Backward-compat: older backups may not include exercises
     if (Array.isArray(data.exercises))   storage.setExercises(data.exercises);

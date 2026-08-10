@@ -33,7 +33,7 @@ export function CalendarPage({ logs, routines, onSaveLog, onDeleteLog }: Calenda
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Calendario</h1>
+      <h1 className="text-2xl font-display font-bold tracking-tight text-gray-900 dark:text-white">Calendario</h1>
 
       <Card>
         {/* Month navigation */}
