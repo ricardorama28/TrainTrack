@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import {
   ClipboardList, FileText, Bot, Lightbulb, AlertTriangle, ArrowRight, ArrowLeft,
-  Check, Copy, Trash2, X, type LucideIcon,
+  Check, Copy, Trash2, X, TrendingUp, type LucideIcon,
 } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { parseRoutineText } from '../../lib/parser';
-import type { ParsedDay, ParsedExercise, MuscleGroup } from '../../types';
+import type { ParsedDay, ParsedExercise, MuscleGroup, ProgressionMethod, ExercisePriority, MetricKind } from '../../types';
 
 type Tab = 'json' | 'text' | 'prompt';
 type Phase = 'input' | 'preview';
@@ -16,6 +16,15 @@ type Phase = 'input' | 'preview';
 const VALID_MUSCLE_GROUPS = new Set<string>([
   'glutes', 'legs', 'back', 'chest', 'shoulders', 'arms', 'core', 'full-body', 'mobility', 'other',
 ]);
+
+const VALID_PROGRESSION_METHODS = new Set<string>(['double-progression', 'linear', 'none']);
+const VALID_PRIORITIES = new Set<string>(['primary', 'secondary', 'optional']);
+const VALID_METRIC_KINDS = new Set<string>(['loaded', 'bodyweight', 'isometric']);
+
+/** Read a numeric field, returning undefined when absent or not a finite number. */
+function num(v: unknown): number | undefined {
+  return typeof v === 'number' && Number.isFinite(v) ? v : undefined;
+}
 
 /**
  * Cleans up pasted JSON before parsing. Handles the common real-world cases:
@@ -81,15 +90,36 @@ function validateAndConvert(raw: unknown): ParsedDay[] {
         typeof e.muscleGroup === 'string' && VALID_MUSCLE_GROUPS.has(e.muscleGroup)
           ? (e.muscleGroup as MuscleGroup)
           : undefined;
+      const progressionMethod =
+        typeof e.progressionMethod === 'string' && VALID_PROGRESSION_METHODS.has(e.progressionMethod)
+          ? (e.progressionMethod as ProgressionMethod)
+          : undefined;
+      const priority =
+        typeof e.priority === 'string' && VALID_PRIORITIES.has(e.priority)
+          ? (e.priority as ExercisePriority)
+          : undefined;
+      const metricKind =
+        typeof e.metricKind === 'string' && VALID_METRIC_KINDS.has(e.metricKind)
+          ? (e.metricKind as MetricKind)
+          : undefined;
       return {
         name: e.name as string,
-        sets: typeof e.sets === 'number' ? e.sets : undefined,
+        sets: num(e.sets),
         reps: e.reps != null ? String(e.reps) : undefined,
-        weight: typeof e.weight === 'number' ? e.weight : undefined,
-        restSeconds: typeof e.restSeconds === 'number' ? e.restSeconds : undefined,
+        weight: num(e.weight),
+        restSeconds: num(e.restSeconds),
         muscleGroup,
         videoUrl: typeof e.videoUrl === 'string' && e.videoUrl ? e.videoUrl : undefined,
         notes: typeof e.notes === 'string' && e.notes ? e.notes : undefined,
+        // Progression (all optional; absent ones stay undefined and import unchanged)
+        progressionMethod: progressionMethod !== 'none' ? progressionMethod : undefined,
+        targetRepMin: num(e.targetRepMin),
+        targetRepMax: num(e.targetRepMax),
+        targetRir: num(e.targetRir),
+        weightIncrement: num(e.weightIncrement),
+        priority,
+        progressionNotes: typeof e.progressionNotes === 'string' && e.progressionNotes ? e.progressionNotes : undefined,
+        metricKind,
       };
     });
 
@@ -100,6 +130,18 @@ function validateAndConvert(raw: unknown): ParsedDay[] {
       exercises,
     };
   });
+}
+
+const PRIORITY_LABEL: Record<string, string> = { primary: 'Principal', secondary: 'Importante', optional: 'Opcional' };
+
+/** Compact read-only summary of an exercise's parsed progression, or '' if none. */
+function progressionSummary(ex: ParsedExercise): string {
+  const parts: string[] = [];
+  if (ex.progressionMethod === 'double-progression') parts.push('Doble progresión');
+  if (ex.targetRepMin != null && ex.targetRepMax != null) parts.push(`${ex.targetRepMin}–${ex.targetRepMax}`);
+  if (ex.targetRir != null) parts.push(`RIR ${ex.targetRir}`);
+  if (ex.priority) parts.push(PRIORITY_LABEL[ex.priority] ?? ex.priority);
+  return parts.join(' · ');
 }
 
 // ─── Static content ───────────────────────────────────────────────────────────
@@ -117,12 +159,18 @@ Formato requerido:
         {
           "name": "Hip Thrust",
           "sets": 4,
-          "reps": "10-12",
+          "reps": "8-12",
           "weight": null,
           "restSeconds": 90,
           "muscleGroup": "glutes",
           "videoUrl": "",
-          "notes": "Notas técnicas opcionales"
+          "notes": "Notas técnicas opcionales",
+          "progressionMethod": "double-progression",
+          "targetRepMin": 8,
+          "targetRepMax": 12,
+          "targetRir": 1,
+          "weightIncrement": 2.5,
+          "priority": "primary"
         }
       ]
     }
@@ -133,6 +181,15 @@ Valores válidos para "type": "workout" o "active-rest"
 Valores válidos para "muscleGroup": "glutes", "legs", "back", "chest", "shoulders", "arms", "core", "full-body", "mobility", "other"
 "weight" puede ser null para ejercicios de peso corporal o sin carga específica
 
+Campos de progresión (TODOS opcionales — omitilos en accesorios, movilidad o si no aplica):
+- "progressionMethod": "double-progression" o "none" (usá doble progresión en ejercicios principales con carga)
+- "targetRepMin" y "targetRepMax": números, el rango de reps objetivo (ej. 8 y 12)
+- "targetRir": número, RIR mínimo para subir carga (típico 1 o 2)
+- "weightIncrement": número, cuántos kg subir al completar el rango (ej. 2.5)
+- "priority": "primary" (principal), "secondary" (importante) u "optional" (opcional)
+- "metricKind": "loaded" (con carga), "bodyweight" (peso corporal) o "isometric" (isométrico); se infiere si se omite
+- "progressionNotes": texto con una regla especial (ej. "no subir si hay molestia lumbar")
+
 Mi solicitud de rutina:
 [ESCRIBE TU PEDIDO AQUÍ — ej: "Rutina de 3 días full body para principiante con mancuernas y banco"]`;
 
@@ -142,17 +199,17 @@ const EXAMPLE_JSON = `{
       "name": "Día A – Full Body",
       "type": "workout",
       "exercises": [
-        { "name": "Hip Thrust", "sets": 4, "reps": "10-12", "weight": 25, "restSeconds": 90, "muscleGroup": "glutes" },
-        { "name": "Sentadilla Goblet", "sets": 3, "reps": "12", "weight": 12, "restSeconds": 75, "muscleGroup": "legs" },
-        { "name": "Plancha", "sets": 3, "reps": "30 seg", "restSeconds": 60, "muscleGroup": "core" }
+        { "name": "Hip Thrust", "sets": 4, "reps": "8-12", "weight": 25, "restSeconds": 90, "muscleGroup": "glutes", "progressionMethod": "double-progression", "targetRepMin": 8, "targetRepMax": 12, "targetRir": 1, "weightIncrement": 2.5, "priority": "primary" },
+        { "name": "Sentadilla Goblet", "sets": 3, "reps": "10-12", "weight": 12, "restSeconds": 75, "muscleGroup": "legs", "progressionMethod": "double-progression", "targetRepMin": 10, "targetRepMax": 12, "targetRir": 2, "weightIncrement": 2.5, "priority": "primary" },
+        { "name": "Plancha", "sets": 3, "reps": "30 seg", "restSeconds": 60, "muscleGroup": "core", "metricKind": "isometric", "priority": "secondary" }
       ]
     },
     {
       "name": "Día B – Tren Superior",
       "type": "workout",
       "exercises": [
-        { "name": "Press Militar", "sets": 3, "reps": "10", "weight": 7.5, "restSeconds": 90, "muscleGroup": "shoulders" },
-        { "name": "Curl de Bíceps", "sets": 3, "reps": "12", "weight": 7.5, "restSeconds": 60, "muscleGroup": "arms" }
+        { "name": "Press Militar", "sets": 3, "reps": "8-10", "weight": 7.5, "restSeconds": 90, "muscleGroup": "shoulders", "progressionMethod": "double-progression", "targetRepMin": 8, "targetRepMax": 10, "targetRir": 1, "weightIncrement": 2.5, "priority": "primary" },
+        { "name": "Curl de Bíceps", "sets": 3, "reps": "12", "weight": 7.5, "restSeconds": 60, "muscleGroup": "arms", "priority": "optional" }
       ]
     }
   ]
@@ -517,6 +574,11 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
                       </div>
                       {ex.notes && (
                         <p className="text-xs text-gray-400 dark:text-gray-500 italic">{ex.notes}</p>
+                      )}
+                      {progressionSummary(ex) && (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-300 text-[11px] font-medium px-1.5 py-0.5">
+                          <TrendingUp size={11} /> {progressionSummary(ex)}
+                        </span>
                       )}
                     </div>
                   ))}

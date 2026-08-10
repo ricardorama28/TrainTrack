@@ -265,6 +265,15 @@ export interface ParsedExercise {
   videoUrl?: string;
   muscleGroup?: MuscleGroup;
   notes?: string;
+  // ── Prescription (progression) — carried through the importer ──
+  progressionMethod?: ProgressionMethod;
+  targetRepMin?: number;
+  targetRepMax?: number;
+  targetRir?: number;
+  weightIncrement?: number;
+  priority?: ExercisePriority;
+  progressionNotes?: string;
+  metricKind?: MetricKind; // exercise nature — applied to the library entry, not the template
 }
 
 export interface ParsedDay {

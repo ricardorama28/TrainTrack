@@ -6,6 +6,7 @@ import { RoutineCard } from '../components/routines/RoutineCard';
 import { RoutineForm } from '../components/routines/RoutineForm';
 import { ImportRoutine } from '../components/routines/ImportRoutine';
 import { WorkoutSession } from '../components/workout/WorkoutSession';
+import { parseRepRange } from '../lib/progression';
 import { storage } from '../lib/storage';
 import type { Routine, ParsedDay, ExerciseTemplate, Exercise, ExerciseCategory, MuscleGroup, WorkoutLog, ActiveSession } from '../types';
 
@@ -62,13 +63,24 @@ export function RoutinesPage({ routines, exercises, onAdd, onUpdate, onDelete, o
   function handleImport(days: ParsedDay[]) {
     for (const day of days) {
       const exercises: ExerciseTemplate[] = day.exercises.map(ex => {
-        // Create or reuse the exercise in the global library, then link by id
+        // Create or reuse the exercise in the global library, then link by id.
+        // metricKind is an exercise-nature attribute → only applied to newly
+        // created library entries (getOrCreate returns existing ones unchanged).
         const libExercise = getOrCreateExercise(ex.name, {
           muscleGroup: ex.muscleGroup,
+          metricKind: ex.metricKind,
           videoUrl: ex.videoUrl,
           technicalNotes: ex.notes,
           category: categoryFromMuscle(ex.muscleGroup),
         }, { enrich: autoEnrich });
+
+        // Derive an explicit rep range from `reps` (e.g. "8-12") when not given,
+        // so double progression works out of the box. Only when it's a real range.
+        const derived = ex.targetRepMin == null && ex.targetRepMax == null
+          ? parseRepRange(ex.reps)
+          : undefined;
+        const targetRepMin = ex.targetRepMin ?? (derived && derived.min < derived.max ? derived.min : undefined);
+        const targetRepMax = ex.targetRepMax ?? (derived && derived.min < derived.max ? derived.max : undefined);
 
         return {
           id: newId(),
@@ -81,6 +93,14 @@ export function RoutinesPage({ routines, exercises, onAdd, onUpdate, onDelete, o
           videoUrl: ex.videoUrl ?? libExercise.referenceUrl ?? libExercise.videoUrl,
           muscleGroup: ex.muscleGroup ?? libExercise.muscleGroup,
           notes: ex.notes,
+          // Progression (prescription) carried from the import
+          progressionMethod: ex.progressionMethod,
+          targetRepMin,
+          targetRepMax,
+          targetRir: ex.targetRir,
+          weightIncrement: ex.weightIncrement,
+          priority: ex.priority,
+          progressionNotes: ex.progressionNotes,
         };
       });
 
