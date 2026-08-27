@@ -4,9 +4,8 @@ interface LogoProps {
 }
 
 /**
- * TrainTrack brand mark: four ascending bars — a rising chart that doubles as a
- * "TT" monogram (progression + analytics). Single-ink via `currentColor`, so it
- * inherits the brand lime when placed in a `text-primary-500` context.
+ * Marca gráfica heredada: cuatro barras ascendentes. Tinta única vía
+ * `currentColor`. Se reemplaza por el sistema de ícono nuevo.
  */
 export function Logo({ size = 32, className = '' }: LogoProps) {
   return (
@@ -24,22 +23,5 @@ export function Logo({ size = 32, className = '' }: LogoProps) {
       <rect x="17.3" y="8" width="5.5" height="20" rx="2" fill="currentColor" opacity="0.86" />
       <rect x="25.2" y="2" width="5.5" height="26" rx="2" fill="currentColor" />
     </svg>
-  );
-}
-
-interface LogoWordmarkProps {
-  size?: number;
-  className?: string;
-}
-
-/** The mark plus the "TrainTrack" wordmark set in the display font. */
-export function LogoWordmark({ size = 28, className = '' }: LogoWordmarkProps) {
-  return (
-    <div className={`inline-flex items-center gap-2 ${className}`}>
-      <Logo size={size} className="text-primary-500" />
-      <span className="font-semibold tracking-tight text-content" style={{ fontSize: size * 0.82 }}>
-        Train<span className="text-primary-500">Track</span>
-      </span>
-    </div>
   );
 }

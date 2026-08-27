@@ -77,7 +77,7 @@ export function NextWorkoutCard({ logs, routines, settings }: NextWorkoutCardPro
         <SectionLabel>Próximo entrenamiento</SectionLabel>
         <h2 className="mt-3 text-title text-content">Todavía no hay nada programado</h2>
         <p className="mt-2 text-caption text-content-muted">
-          Creá una rutina y TrainTrack se encarga de decirte qué toca cada día.
+          Creá una rutina y alfallo se encarga de decirte qué toca cada día.
         </p>
         <Button className="mt-5" onClick={() => navigate('/routines')}>
           Crear una rutina <ArrowRight size={15} strokeWidth={2} />

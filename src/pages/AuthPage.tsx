@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '../components/ui/Button';
-import { Logo } from '../components/ui/Logo';
+import { Wordmark } from '../components/brand/Wordmark';
 import { useAuth } from '../context/AuthContext';
 
 type Mode = 'signin' | 'signup';
@@ -63,14 +63,13 @@ export function AuthPage() {
       <div className="pointer-events-none fixed inset-x-0 top-0 h-80 brand-halo" aria-hidden="true" />
 
       <div className="relative w-full max-w-sm space-y-6">
+        {/* Sin ícono adosado: acá la marca denominativa va sola, a tamaño
+            grande. Dos elementos de marca juntos compiten. */}
         <div className="text-center">
-          <div className="mb-4 flex justify-center">
-            <Logo size={44} className="text-content" />
-          </div>
-          <h1 className="text-display text-content">
-            Train<span className="text-primary-600 dark:text-primary-400">Track</span>
+          <h1>
+            <Wordmark className="text-4xl" />
           </h1>
-          <p className="mt-2 text-caption text-content-muted">
+          <p className="mt-3 text-caption text-content-muted">
             {mode === 'signin' ? 'Iniciá sesión para sincronizar tus datos' : 'Creá tu cuenta'}
           </p>
         </div>

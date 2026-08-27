@@ -5,7 +5,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { pullFromCloud, pushToCloud, cloudHasData, resetSyncState } from '../lib/cloudSync';
 import { storage } from '../lib/storage';
 
-const LOCAL_ONLY_KEY = 'traintrack_local_only';
+const LOCAL_ONLY_KEY = 'alfallo_local_only';
 
 interface AuthContextValue {
   configured: boolean;

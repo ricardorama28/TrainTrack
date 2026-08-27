@@ -45,12 +45,12 @@ export function sanitizeWorkoutLogs(raw: unknown): WorkoutLog[] {
 // ─── Storage Keys ─────────────────────────────────────────────────────────────
 
 const KEYS = {
-  WORKOUT_LOGS:   'traintrack_workouts',
-  ROUTINES:       'traintrack_routines',
-  EXERCISES:      'traintrack_exercises',
-  SETTINGS:       'traintrack_settings',
-  INITIALIZED:    'traintrack_initialized',
-  ACTIVE_SESSION: 'traintrack_active_session',
+  WORKOUT_LOGS:   'alfallo_workouts',
+  ROUTINES:       'alfallo_routines',
+  EXERCISES:      'alfallo_exercises',
+  SETTINGS:       'alfallo_settings',
+  INITIALIZED:    'alfallo_initialized',
+  ACTIVE_SESSION: 'alfallo_active_session',
 } as const;
 
 /** An in-progress session older than this is considered stale and discarded. */

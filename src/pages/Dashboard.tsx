@@ -6,6 +6,7 @@ import { MotivationalQuote } from '../components/dashboard/MotivationalQuote';
 import { NextWorkoutCard } from '../components/dashboard/NextWorkoutCard';
 import { ProgressHighlights } from '../components/dashboard/ProgressHighlights';
 import { Logo } from '../components/ui/Logo';
+import { Wordmark } from '../components/brand/Wordmark';
 import { Button } from '../components/ui/Button';
 import { calculateCurrentStreak } from '../lib/streaks';
 import { formatDateLong, todayStr } from '../lib/dates';
@@ -53,10 +54,13 @@ export function Dashboard({ logs, routines, exercises, settings }: DashboardProp
   return (
     <div>
       <header className="mb-12">
+        {/* Fila de marca. El saludo de abajo ya no puede caer en el nombre de
+            la app cuando no hay usuario: la marca vive acá y repetirla sería
+            decir lo mismo dos veces. */}
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Logo size={16} className="shrink-0 text-content-subtle" />
-            <p className="text-overline uppercase text-content-subtle">{formatDateLong(todayStr())}</p>
+            <Logo size={28} className="shrink-0 text-content" />
+            <Wordmark className="text-xl" />
           </div>
           <button
             onClick={() => navigate('/settings')}
@@ -67,8 +71,10 @@ export function Dashboard({ logs, routines, exercises, settings }: DashboardProp
           </button>
         </div>
 
-        <h1 className="mt-4 truncate text-display text-content">
-          {firstName ? `Hola, ${firstName}` : 'TrainTrack'}
+        <p className="mt-8 text-overline uppercase text-content-subtle">{formatDateLong(todayStr())}</p>
+
+        <h1 className="mt-2 truncate text-display text-content">
+          {firstName ? `Hola, ${firstName}` : 'Hola'}
         </h1>
 
         <div className="mt-2 flex items-center justify-between gap-4">

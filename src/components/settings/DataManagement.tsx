@@ -20,7 +20,7 @@ export function DataManagement({ onDataChange }: DataManagementProps) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `traintrack-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `alfallo-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -33,7 +33,7 @@ export function DataManagement({ onDataChange }: DataManagementProps) {
       try {
         const data = JSON.parse(ev.target?.result as string) as AppData;
         if (!data.workoutLogs && !data.routines) {
-          setImportError('El archivo no parece ser un backup de TrainTrack.');
+          setImportError('El archivo no parece ser un backup de alfallo.');
           return;
         }
         storage.importAll(data);

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { LogoWordmark } from '../components/ui/Logo';
+import { Wordmark } from '../components/brand/Wordmark';
 import { DataManagement } from '../components/settings/DataManagement';
 import { useAuth } from '../context/AuthContext';
 import { RefreshCw, AlertTriangle } from 'lucide-react';
@@ -258,7 +258,7 @@ export function SettingsPage({ settings, onUpdate, onDataChange }: SettingsPageP
 
       {/* About */}
       <div className="flex flex-col items-center py-4 text-xs text-gray-400 dark:text-gray-600">
-        <LogoWordmark size={22} className="mb-2 opacity-80" />
+        <Wordmark className="mb-2 text-lg" />
         <p>v1.1</p>
         <p className="mt-1">Todos los datos se guardan en tu dispositivo.</p>
       </div>

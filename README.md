@@ -1,4 +1,4 @@
-# TrainTrack
+# alfallo
 
 App personal para registrar entrenamientos, rutinas y progreso. Funciona offline-first y, opcionalmente, sincroniza entre dispositivos vía Supabase.
 
@@ -21,8 +21,8 @@ App personal para registrar entrenamientos, rutinas y progreso. Funciona offline
 ## Instalación local
 
 ```bash
-git clone https://github.com/ricardorama28/traintrack.git
-cd traintrack
+git clone https://github.com/ricardorama28/alfallo.git
+cd alfallo
 npm install
 npm run dev
 ```
@@ -91,7 +91,7 @@ RLS garantiza que cada usuario solo accede a su propia fila.
 **En el dashboard de Supabase:**
 1. **Authentication → Providers → Google** → activar.
 2. Pegá el Client ID y Client Secret.
-3. **Authentication → URL Configuration → Site URL** → URL de producción (ej. `https://traintrack-xxx.vercel.app`), **sin barra final**.
+3. **Authentication → URL Configuration → Site URL** → URL de producción (ej. `https://alfallo-xxx.vercel.app`), **sin barra final**.
 4. **Authentication → URL Configuration → Redirect URLs**, agregá:
    - La URL de producción.
    - `http://localhost:5173` (desarrollo).
@@ -152,7 +152,7 @@ npm run build
 
 1. `npm install -D gh-pages`
 2. En `package.json`: `"deploy": "gh-pages -d dist"`
-3. En `vite.config.ts`: `base: '/traintrack/'`
+3. En `vite.config.ts`: `base: '/alfallo/'`
 4. `npm run build && npm run deploy`
 
 ---
