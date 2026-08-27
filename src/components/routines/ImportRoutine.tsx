@@ -345,7 +345,7 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
               >
                 <Icon size={13} /> {label}
                 {t === 'json' && (
-                  <span className={`text-[9px] px-1 rounded ${tab === 'json' ? 'bg-white/20 text-white' : 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'}`}>
+                  <span className={`text-[9px] px-1 rounded ${tab === 'json' ? 'bg-white/20 text-white' : 'bg-primary-500/15 text-primary-700 dark:text-primary-300'}`}>
                     Rec.
                   </span>
                 )}
@@ -356,7 +356,7 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
           {/* JSON tab */}
           {tab === 'json' && (
             <div className="space-y-3">
-              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 text-xs text-blue-700 dark:text-blue-300">
+              <div className="bg-sea-500/8 ring-1 ring-inset ring-sea-500/15 rounded-xl p-3 text-caption text-sea-700 dark:text-sea-300">
                 <p className="inline-flex items-center gap-1 font-medium mb-1"><Lightbulb size={13} /> Importación por JSON</p>
                 <p>Pegá el JSON generado con el prompt de la pestaña "Prompt ChatGPT". La estructura es validada antes de importar.</p>
               </div>
@@ -397,7 +397,7 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
           {/* Text tab */}
           {tab === 'text' && (
             <div className="space-y-3">
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-3 text-xs text-yellow-700 dark:text-yellow-300">
+              <div className="bg-accent-500/8 ring-1 ring-inset ring-accent-500/15 rounded-xl p-3 text-caption text-accent-700 dark:text-accent-300">
                 <p className="inline-flex items-center gap-1 font-medium mb-1"><AlertTriangle size={13} /> Importación por texto libre</p>
                 <p>El parser solo reconoce ejercicios con series/reps explícitas (ej: 4x10). Texto médico, objetivos y notas se ignoran automáticamente. Para mejores resultados usá el formato JSON.</p>
               </div>
@@ -424,7 +424,7 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
           {/* ChatGPT prompt tab */}
           {tab === 'prompt' && (
             <div className="space-y-3">
-              <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-3 text-xs text-purple-700 dark:text-purple-300">
+              <div className="bg-surface-2 ring-1 ring-inset ring-hairline rounded-xl p-3 text-caption text-content-muted">
                 <p className="inline-flex items-center gap-1 font-medium mb-2"><Bot size={13} /> Cómo usar el prompt con ChatGPT</p>
                 <ol className="list-decimal ml-4 space-y-0.5">
                   <li>Copiá el prompt de abajo con el botón "Copiar"</li>
@@ -588,7 +588,7 @@ export function ImportRoutine({ open, onClose, onImport }: ImportRoutineProps) {
           </div>
 
           {generalNotes && (
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-3 text-xs text-yellow-700 dark:text-yellow-300">
+            <div className="bg-accent-500/8 ring-1 ring-inset ring-accent-500/15 rounded-xl p-3 text-caption text-accent-700 dark:text-accent-300">
               <p className="font-medium mb-1">Notas generales (no importadas como ejercicios):</p>
               <p className="whitespace-pre-line">{generalNotes}</p>
             </div>

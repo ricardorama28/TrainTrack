@@ -33,7 +33,10 @@ export function UpcomingDays({ logs, settings }: UpcomingDaysProps) {
           } else if (isPlannedRest) {
             badge = <Badge variant="gray"><Moon size={12} /> Descanso planeado</Badge>;
           } else {
-            badge = <Badge variant="gray">Pendiente</Badge>;
+            // "Pendiente" es el estado por defecto de casi todas las filas: como
+            // chip repetido siete veces era ruido. En texto apagado se lee igual
+            // y deja que destaquen los días que sí tienen algo.
+            badge = <span className="text-caption text-content-subtle">Pendiente</span>;
           }
 
           return (

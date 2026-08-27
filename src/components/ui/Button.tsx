@@ -1,6 +1,6 @@
 import React from 'react';
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'accent';
+type ButtonVariant = 'primary' | 'ink' | 'secondary' | 'ghost' | 'danger' | 'accent';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -11,9 +11,15 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  // El lima es la acción. Una sola sombra de color, sin degradado.
-  primary:   'bg-primary-500 hover:bg-primary-400 active:bg-primary-600 text-ink-950 shadow-[0_1px_2px_rgb(14_20_17/0.10),0_8px_20px_-10px_rgb(132_215_23/0.65)]',
-  accent:    'bg-accent-500 hover:bg-accent-400 active:bg-accent-600 text-white shadow-[0_1px_2px_rgb(14_20_17/0.10),0_8px_20px_-10px_rgb(248_95_38/0.55)]',
+  // El lima es la acción. Plano: el halo de color lo hacía leerse como un
+  // botón brillante de plantilla, no como la única acción de la pantalla.
+  primary:   'bg-primary-500 hover:bg-primary-400 active:bg-primary-600 text-ink-950',
+  /* Acción fuerte que se repite en una lista. Tiene el mismo peso que
+     `primary` pero no gasta lima: en una pantalla con N tarjetas, N botones de
+     marca no señalan nada — solo gritan. El lima queda para la única acción
+     que sí es única en la pantalla. */
+  ink:       'bg-content text-canvas hover:opacity-90 active:opacity-80',
+  accent:    'bg-accent-500 hover:bg-accent-400 active:bg-accent-600 text-white',
   secondary: 'bg-surface-2 hover:bg-surface-3 text-content border border-hairline hover:border-hairline-strong',
   ghost:     'bg-transparent hover:bg-surface-2 text-content-muted hover:text-content',
   danger:    'bg-red-500/10 hover:bg-red-500 text-red-600 hover:text-white border border-red-500/25 hover:border-red-500 dark:text-red-400 dark:hover:text-white',

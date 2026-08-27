@@ -1,25 +1,34 @@
-// Shared chart palette, aligned with the Tailwind primary/accent scales so the
-// Recharts visuals read as part of the same design system in light and dark.
+// Paleta de gráficos. Deriva de la misma restricción que el resto del sistema:
+// lima (marca) → ámbar (cálido) → sea (frío) → neutros. Antes había cyan, pink,
+// gold y teal sueltos, hues "tech" que no pertenecían a ninguna familia y
+// convertían cualquier gráfico en un arcoíris.
+
+/** Lee un token semántico de `index.css` como color CSS resoluble por Recharts,
+ *  para que ejes y rejilla sigan el tema sin duplicar valores. */
+const token = (name: string) => `rgb(var(${name}))`;
 
 export const CHART = {
-  primary: '#84D717',   // primary-500 (lime)
+  primary: '#84D717',   // primary-500 (lima)
   primaryDim: '#B7F03A',
-  accent: '#F85F26',    // accent-500 (amber)
-  grid: 'rgba(148, 163, 184, 0.18)',
-  axis: '#94a3b8',      // slate-400, legible on both themes
+  accent: '#F85F26',    // accent-500 (ámbar) — reservado a señales, no a series
+  /** Serie única de apoyo: tinta. Una sola línea no necesita un color propio. */
+  line: token('--c-text-muted'),
+  grid: token('--c-hairline'),
+  axis: token('--c-text-subtle'),
 };
 
-/** Muscle-group bar colors — one stable hue per group, harmonized with the
- *  lime/amber brand plus a few distinct tech hues so groups stay readable. */
-export const MUSCLE_COLORS: Record<string, string> = {
-  glutes: '#84D717',    // lime (brand)
-  legs: '#B7F03A',      // bright lime
-  back: '#22D3EE',      // cyan
-  chest: '#F85F26',     // amber (brand accent)
-  shoulders: '#FBBF24', // gold
-  arms: '#F472B6',      // pink
-  core: '#2DD4BF',      // teal
-  'full-body': '#94A3B8', // slate
-  mobility: '#4ADE80',  // green
-  other: '#64748B',     // muted slate
-};
+/**
+ * Series por grupo muscular es UNA medida comparada entre categorías, no diez
+ * series distintas: darle un hue propio a cada músculo era color decorativo,
+ * y con diez categorías ningún juego de hues se sostiene. Se codifica por
+ * intensidad sobre un solo tono de marca — la barra más alta es la más densa —
+ * y la posición sigue haciendo el resto del trabajo.
+ */
+const RAMP = ['#84D717', '#8FCF35', '#93BE52', '#93AC66', '#8F9C73', '#8B9187'];
+
+/** Color de la barra en la posición `rank` de un ranking de `total` barras. */
+export function rampColor(rank: number, total: number): string {
+  if (total <= 1) return RAMP[0];
+  const i = Math.round((rank / (total - 1)) * (RAMP.length - 1));
+  return RAMP[Math.min(i, RAMP.length - 1)];
+}

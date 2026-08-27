@@ -13,6 +13,9 @@ interface ProgressHighlightsProps {
   /** Máximo de filas visibles; el resto queda tras un enlace a Progreso.
    *  Sin límite (la página de Progreso) se muestran todas. */
   limit?: number;
+  /** Encabezado del bloque. En la página de Progreso repetir "Progreso" sería
+   *  eco del título, así que allí se pasa otro. */
+  label?: string;
 }
 
 type Kind = 'pr' | 'up' | 'stalled';
@@ -25,7 +28,7 @@ interface Highlight {
 
 const ORDER: Record<Kind, number> = { pr: 0, up: 1, stalled: 2 };
 
-export function ProgressHighlights({ logs, exercises, settings, limit }: ProgressHighlightsProps) {
+export function ProgressHighlights({ logs, exercises, settings, limit, label = 'Progreso' }: ProgressHighlightsProps) {
   const navigate = useNavigate();
   const highlights = useMemo<Highlight[]>(() => {
     const threshold = settings.stalledSessionThreshold ?? 3;
@@ -74,7 +77,7 @@ export function ProgressHighlights({ logs, exercises, settings, limit }: Progres
           ) : undefined
         }
       >
-        Progreso
+        {label}
       </SectionLabel>
 
       {/* Sin icono por fila: si aparece en todas, es textura, no información.
@@ -87,7 +90,10 @@ export function ProgressHighlights({ logs, exercises, settings, limit }: Progres
               <p className="text-caption text-content-muted">{h.text}</p>
             </div>
             {h.weight > 0 && (
-              <span className="font-mono text-metric text-content">{h.weight} kg</span>
+              <span className="flex items-baseline gap-1 whitespace-nowrap">
+                <span className="font-mono text-metric text-content">{h.weight}</span>
+                <span className="text-caption text-content-muted">kg</span>
+              </span>
             )}
           </div>
         ))}

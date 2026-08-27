@@ -20,51 +20,47 @@ const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
 export function RoutineCard({ routine, onStart, onEdit, onDuplicate, onDelete, onMoveUp, onMoveDown, canMoveUp, canMoveDown }: RoutineCardProps) {
   return (
-    <Card className="space-y-3">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap mb-1">
-            <h3 className="font-semibold text-gray-800 dark:text-gray-100 truncate">{routine.name}</h3>
-            <Badge variant={routine.type === 'workout' ? 'green' : 'teal'}>
-              {routine.type === 'workout' ? 'Entrenamiento' : 'Desc. activo'}
-            </Badge>
-          </div>
-          {routine.description && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{routine.description}</p>
-          )}
-        </div>
+    <Card>
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <h3 className="min-w-0 flex-1 truncate text-title text-content">{routine.name}</h3>
+        <Badge variant={routine.type === 'workout' ? 'purple' : 'teal'}>
+          {routine.type === 'workout' ? 'Entrenamiento' : 'Desc. activo'}
+        </Badge>
       </div>
+      {routine.description && (
+        <p className="mt-1.5 line-clamp-2 text-caption text-content-muted">{routine.description}</p>
+      )}
 
-      {/* Exercise count */}
-      <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
-        <span className="flex items-center gap-1">
-          <ClipboardList size={14} />
+      {/* Metadatos */}
+      <div className="mt-3 flex items-center gap-4 text-caption text-content-muted">
+        <span className="flex items-center gap-1.5">
+          <ClipboardList size={13} />
           {routine.exercises.length} ejercicio{routine.exercises.length !== 1 ? 's' : ''}
         </span>
         {routine.suggestedDays && routine.suggestedDays.length > 0 && (
-          <span className="flex items-center gap-1">
-            <Calendar size={14} />
+          <span className="flex items-center gap-1.5">
+            <Calendar size={13} />
             {routine.suggestedDays.map(d => DAY_NAMES[d]).join(', ')}
           </span>
         )}
       </div>
 
-      {/* Exercise preview */}
+      {/* Vista previa: sin viñeta por fila — aparecía en todas, así que era
+          textura. La columna de series queda alineada en Mono. */}
       {routine.exercises.length > 0 && (
-        <div className="space-y-1">
+        <div className="mt-4 divide-y divide-hairline">
           {routine.exercises.slice(0, 3).map(ex => (
-            <div key={ex.id} className="flex items-center gap-2 text-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary-400 flex-shrink-0" />
-              <span className="text-gray-700 dark:text-gray-300 truncate">{ex.name}</span>
+            <div key={ex.id} className="grid grid-cols-[1fr_auto] items-baseline gap-4 py-2.5 first:pt-0">
+              <span className="truncate text-body text-content">{ex.name}</span>
               {ex.sets && ex.reps && (
-                <span className="text-gray-400 dark:text-gray-500 text-xs ml-auto flex-shrink-0">
+                <span className="font-mono text-caption text-content-muted">
                   {ex.sets}×{ex.reps}
                 </span>
               )}
             </div>
           ))}
           {routine.exercises.length > 3 && (
-            <p className="text-xs text-gray-400 dark:text-gray-500 pl-3">
+            <p className="pt-2.5 text-caption text-content-subtle">
               +{routine.exercises.length - 3} más
             </p>
           )}
@@ -73,13 +69,13 @@ export function RoutineCard({ routine, onStart, onEdit, onDuplicate, onDelete, o
 
       {/* Start workout */}
       {routine.exercises.length > 0 && (
-        <Button size="lg" onClick={onStart} fullWidth className="mt-1">
+        <Button variant="ink" size="lg" onClick={onStart} fullWidth className="mt-5">
           <Play size={16} /> Iniciar entrenamiento
         </Button>
       )}
 
       {/* Actions */}
-      <div className="flex gap-2 border-t border-gray-100 dark:border-gray-800 pt-2">
+      <div className="mt-4 flex gap-2 border-t border-hairline pt-3">
         <Button variant="ghost" size="sm" onClick={onMoveUp} disabled={!canMoveUp} aria-label="Subir rutina">
           <ChevronUp size={16} />
         </Button>

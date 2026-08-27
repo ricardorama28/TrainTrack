@@ -1,5 +1,5 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { CHART, MUSCLE_COLORS } from './chartTheme';
+import { CHART, rampColor } from './chartTheme';
 import { MUSCLE_LABELS } from '../../lib/labels';
 import type { MuscleVolume } from '../../lib/volume';
 
@@ -22,13 +22,13 @@ export function MuscleVolumeChart({ data }: MuscleVolumeChartProps) {
           <YAxis type="category" dataKey="label" tick={{ fontSize: 11, fill: CHART.axis }} tickLine={false} axisLine={false} width={72} />
           <Tooltip
             cursor={{ fill: 'rgba(148,163,184,0.1)' }}
-            contentStyle={{ background: '#141B16', border: 'none', borderRadius: 12, fontSize: 12 }}
-            labelStyle={{ color: '#cbd5e1' }}
+            contentStyle={{ background: '#141B16', border: 'none', borderRadius: 12, fontSize: 12, color: '#F1F2EC' }}
+            labelStyle={{ color: '#9BA197' }}
             formatter={(v: number) => [`${v} series`, 'Trabajo']}
           />
           <Bar dataKey="sets" radius={[0, 6, 6, 0]}>
-            {rows.map(r => (
-              <Cell key={r.muscleGroup} fill={MUSCLE_COLORS[r.muscleGroup] ?? CHART.primary} />
+            {rows.map((r, i) => (
+              <Cell key={r.muscleGroup} fill={rampColor(i, rows.length)} />
             ))}
           </Bar>
         </BarChart>

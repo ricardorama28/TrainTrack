@@ -1,4 +1,4 @@
-import { getDaysInMonth, getFirstDayOfMonth, formatMonthYear, todayStr, parseLocalDate } from '../../lib/dates';
+import { getDaysInMonth, getFirstDayOfMonth, todayStr, parseLocalDate } from '../../lib/dates';
 import type { WorkoutLog } from '../../types';
 
 interface MonthCalendarProps {
@@ -8,11 +8,13 @@ interface MonthCalendarProps {
   onDayClick: (date: string) => void;
 }
 
+/** Misma semántica que el resumen semanal: tinta = hecho, sea = descanso,
+ *  rojo = fallo. El lima queda para la acción de la pantalla, no para el mapa. */
 const TYPE_STYLES: Record<string, string> = {
-  workout:      'bg-primary-500 text-white',
-  rest:         'bg-blue-400 text-white',
-  'active-rest':'bg-teal-400 text-white',
-  missed:       'bg-red-400 text-white',
+  workout:      'bg-content text-canvas',
+  rest:         'bg-sea-500/15 text-sea-700 dark:text-sea-300',
+  'active-rest':'bg-sea-500/8 text-sea-600 dark:text-sea-300/90',
+  missed:       'bg-red-500/12 text-red-600 dark:text-red-400',
 };
 
 const DAY_HEADERS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
@@ -28,14 +30,10 @@ export function MonthCalendar({ year, month, logs, onDayClick }: MonthCalendarPr
 
   return (
     <div>
-      <p className="text-center text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3 capitalize">
-        {formatMonthYear(new Date(year, month))}
-      </p>
-
       {/* Day headers */}
       <div className="grid grid-cols-7 mb-1">
         {DAY_HEADERS.map(d => (
-          <div key={d} className="text-center text-xs font-medium text-gray-400 dark:text-gray-500 py-1">
+          <div key={d} className="py-1 text-center text-overline uppercase text-content-subtle">
             {d}
           </div>
         ))}
@@ -54,17 +52,17 @@ export function MonthCalendar({ year, month, logs, onDayClick }: MonthCalendarPr
           const isToday = date === today;
           const isFuture = date > today;
 
-          const baseStyle = 'relative flex items-center justify-center rounded-full w-9 h-9 mx-auto text-sm font-medium transition-all cursor-pointer select-none';
+          const baseStyle = 'relative mx-auto flex h-9 w-9 cursor-pointer select-none items-center justify-center rounded-xl font-mono text-caption transition-colors';
 
           let style = '';
           if (log) {
-            style = TYPE_STYLES[log.type] || 'bg-gray-200 dark:bg-gray-600';
+            style = TYPE_STYLES[log.type] || 'bg-surface-3 text-content-muted';
           } else if (isToday) {
-            style = 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 ring-2 ring-primary-500';
+            style = 'text-content ring-1 ring-content-subtle';
           } else if (isFuture) {
-            style = 'text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700';
+            style = 'text-content-subtle hover:bg-surface-2';
           } else {
-            style = 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700';
+            style = 'text-content-muted hover:bg-surface-2';
           }
 
           return (
@@ -81,16 +79,16 @@ export function MonthCalendar({ year, month, logs, onDayClick }: MonthCalendarPr
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-3 mt-4 justify-center">
+      <div className="mt-5 flex flex-wrap justify-center gap-x-4 gap-y-2">
         {[
-          { color: 'bg-primary-500', label: 'Entrenado' },
-          { color: 'bg-blue-400',    label: 'Descanso' },
-          { color: 'bg-teal-400',    label: 'Desc. activo' },
-          { color: 'bg-red-400',     label: 'No realizado' },
+          { color: 'bg-content',      label: 'Entrenado' },
+          { color: 'bg-sea-500/40',   label: 'Descanso' },
+          { color: 'bg-sea-500/20',   label: 'Desc. activo' },
+          { color: 'bg-red-500/40',   label: 'No realizado' },
         ].map(item => (
           <div key={item.label} className="flex items-center gap-1.5">
-            <div className={`w-3 h-3 rounded-full ${item.color}`} />
-            <span className="text-xs text-gray-500 dark:text-gray-400">{item.label}</span>
+            <div className={`h-2 w-2 rounded-full ${item.color}`} />
+            <span className="text-caption text-content-muted">{item.label}</span>
           </div>
         ))}
       </div>

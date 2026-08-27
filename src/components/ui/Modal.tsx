@@ -46,7 +46,7 @@ export function Modal({ open, onClose, title, children, maxWidth = 'max-w-lg' }:
 
         {title && (
           <div className="flex items-center justify-between gap-4 px-5 pb-4 pt-3 sm:pt-5 border-b border-hairline">
-            <h2 className="text-lg font-display font-bold tracking-tight text-content">{title}</h2>
+            <h2 className="text-title text-content">{title}</h2>
             <button
               onClick={onClose}
               className="shrink-0 p-2 -mr-1 rounded-full text-content-subtle hover:text-content hover:bg-surface-2 transition-colors"

@@ -58,16 +58,19 @@ export function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-5 py-10 bg-gray-50 dark:bg-gray-900">
-      <div className="w-full max-w-sm space-y-6">
+    <div className="relative flex min-h-screen items-center justify-center bg-canvas px-5 py-10">
+      {/* Primera impresión: el halo de marca en vez de un fondo plano. */}
+      <div className="pointer-events-none fixed inset-x-0 top-0 h-80 brand-halo" aria-hidden="true" />
+
+      <div className="relative w-full max-w-sm space-y-6">
         <div className="text-center">
-          <div className="flex justify-center mb-3">
-            <Logo size={52} className="text-primary-500" />
+          <div className="mb-4 flex justify-center">
+            <Logo size={44} className="text-content" />
           </div>
-          <h1 className="text-2xl font-display font-bold tracking-tight text-gray-900 dark:text-white">
-            Train<span className="text-primary-500">Track</span>
+          <h1 className="text-display text-content">
+            Train<span className="text-primary-600 dark:text-primary-400">Track</span>
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p className="mt-2 text-caption text-content-muted">
             {mode === 'signin' ? 'Iniciá sesión para sincronizar tus datos' : 'Creá tu cuenta'}
           </p>
         </div>
@@ -105,7 +108,7 @@ export function AuthPage() {
             </div>
           )}
           {info && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 text-xs text-blue-700 dark:text-blue-300">
+            <div className="bg-sea-500/8 ring-1 ring-inset ring-sea-500/15 rounded-xl p-3 text-caption text-sea-700 dark:text-sea-300">
               {info}
             </div>
           )}
@@ -116,9 +119,9 @@ export function AuthPage() {
         </form>
 
         <div className="flex items-center gap-3">
-          <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
-          <span className="text-xs text-gray-400">o</span>
-          <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+          <div className="h-px flex-1 bg-hairline" />
+          <span className="text-caption text-content-subtle">o</span>
+          <div className="h-px flex-1 bg-hairline" />
         </div>
 
         <Button variant="secondary" fullWidth disabled={busy} onClick={handleGoogle}>
@@ -146,7 +149,7 @@ export function AuthPage() {
         <div className="text-center pt-2">
           <button
             onClick={enterLocalOnly}
-            className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:underline"
+            className="text-caption text-content-subtle underline-offset-4 hover:text-content hover:underline"
           >
             Usar sin cuenta en este dispositivo
           </button>

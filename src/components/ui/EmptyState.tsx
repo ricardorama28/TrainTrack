@@ -19,7 +19,7 @@ export function EmptyState({ icon, title, description, action }: EmptyStateProps
       >
         {icon ?? <Inbox strokeWidth={1.5} />}
       </div>
-      <h3 className="font-display text-lg font-bold tracking-tight text-content mb-1">{title}</h3>
+      <h3 className="mb-1 text-title text-content">{title}</h3>
       {description && (
         <p className="text-sm leading-relaxed text-content-muted max-w-[34ch] mb-5">{description}</p>
       )}

@@ -21,10 +21,10 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
     <div
       onClick={() => onChange(!checked)}
       className={`w-11 h-6 rounded-full transition-colors cursor-pointer flex-shrink-0 ${
-        checked ? 'bg-primary-500' : 'bg-gray-300 dark:bg-gray-600'
+        checked ? 'bg-content' : 'bg-surface-3'
       }`}
     >
-      <div className={`w-5 h-5 bg-white rounded-full shadow mt-0.5 transition-transform ${
+      <div className={`w-5 h-5 bg-canvas rounded-full shadow mt-0.5 transition-transform ${
         checked ? 'translate-x-5 ml-0.5' : 'translate-x-0.5'
       }`} />
     </div>
@@ -54,7 +54,7 @@ function AccountSection() {
 
   return (
     <Card>
-      <h2 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">Cuenta</h2>
+      <h2 className="section-label mb-4">Cuenta</h2>
 
       {user ? (
         <div className="space-y-3">
@@ -116,30 +116,30 @@ export function SettingsPage({ settings, onUpdate, onDataChange }: SettingsPageP
   }
 
   return (
-    <div className="space-y-5">
-      <h1 className="text-2xl font-display font-bold tracking-tight text-gray-900 dark:text-white">Ajustes</h1>
+    <div className="space-y-6">
+      <h1 className="mb-12 text-display text-content">Ajustes</h1>
 
       {/* Account & sync */}
       <AccountSection />
 
       {/* Weekly goal */}
       <Card>
-        <h2 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">Objetivo semanal</h2>
+        <h2 className="section-label mb-4">Objetivo semanal</h2>
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-600 dark:text-gray-300">Entrenamientos por semana:</span>
           <div className="flex items-center gap-2">
             <button
               onClick={() => onUpdate({ weeklyGoal: Math.max(1, settings.weeklyGoal - 1) })}
-              className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+              className="grid h-8 w-8 place-items-center rounded-full bg-surface-2 text-content-muted transition-colors hover:bg-surface-3 hover:text-content"
             >
               −
             </button>
-            <span className="text-2xl font-display font-bold text-primary-600 dark:text-primary-400 w-8 text-center tabular-nums">
+            <span className="w-8 text-center font-mono text-metric-lg text-content">
               {settings.weeklyGoal}
             </span>
             <button
               onClick={() => onUpdate({ weeklyGoal: Math.min(7, settings.weeklyGoal + 1) })}
-              className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+              className="grid h-8 w-8 place-items-center rounded-full bg-surface-2 text-content-muted transition-colors hover:bg-surface-3 hover:text-content"
             >
               +
             </button>
@@ -149,7 +149,7 @@ export function SettingsPage({ settings, onUpdate, onDataChange }: SettingsPageP
 
       {/* Rest days */}
       <Card>
-        <h2 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">Días de descanso habituales</h2>
+        <h2 className="section-label mb-4">Días de descanso habituales</h2>
         <div className="flex gap-1.5">
           {DAY_NAMES.map((d, i) => (
             <button
@@ -157,8 +157,8 @@ export function SettingsPage({ settings, onUpdate, onDataChange }: SettingsPageP
               onClick={() => toggleRestDay(i)}
               className={`flex-1 py-2 rounded-xl text-xs font-medium transition-all ${
                 settings.restDays.includes(i)
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  ? 'bg-sea-500/15 text-sea-700 dark:text-sea-300 ring-1 ring-inset ring-sea-500/25'
+                  : 'bg-surface-2 text-content-subtle hover:bg-surface-3'
               }`}
             >
               {d}
@@ -169,7 +169,7 @@ export function SettingsPage({ settings, onUpdate, onDataChange }: SettingsPageP
 
       {/* Streak options */}
       <Card>
-        <h2 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">Racha</h2>
+        <h2 className="section-label mb-4">Racha</h2>
         <label className="flex items-start gap-3 cursor-pointer">
           <div className="relative mt-0.5">
             <input
@@ -181,10 +181,10 @@ export function SettingsPage({ settings, onUpdate, onDataChange }: SettingsPageP
             <div
               onClick={() => onUpdate({ restDaysKeepStreak: !settings.restDaysKeepStreak })}
               className={`w-11 h-6 rounded-full transition-colors cursor-pointer ${
-                settings.restDaysKeepStreak ? 'bg-primary-500' : 'bg-gray-300 dark:bg-gray-600'
+                settings.restDaysKeepStreak ? 'bg-content' : 'bg-surface-3'
               }`}
             >
-              <div className={`w-5 h-5 bg-white rounded-full shadow mt-0.5 transition-transform ${
+              <div className={`w-5 h-5 bg-canvas rounded-full shadow mt-0.5 transition-transform ${
                 settings.restDaysKeepStreak ? 'translate-x-5 ml-0.5' : 'translate-x-0.5'
               }`} />
             </div>
@@ -200,7 +200,7 @@ export function SettingsPage({ settings, onUpdate, onDataChange }: SettingsPageP
 
       {/* Dark mode */}
       <Card>
-        <h2 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">Apariencia</h2>
+        <h2 className="section-label mb-4">Apariencia</h2>
         <label className="flex items-center justify-between cursor-pointer">
           <div>
             <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Modo oscuro</p>
@@ -209,10 +209,10 @@ export function SettingsPage({ settings, onUpdate, onDataChange }: SettingsPageP
           <div
             onClick={toggleDarkMode}
             className={`w-11 h-6 rounded-full transition-colors cursor-pointer ${
-              settings.darkMode ? 'bg-primary-500' : 'bg-gray-300 dark:bg-gray-600'
+              settings.darkMode ? 'bg-content' : 'bg-surface-3'
             }`}
           >
-            <div className={`w-5 h-5 bg-white rounded-full shadow mt-0.5 transition-transform ${
+            <div className={`w-5 h-5 bg-canvas rounded-full shadow mt-0.5 transition-transform ${
               settings.darkMode ? 'translate-x-5 ml-0.5' : 'translate-x-0.5'
             }`} />
           </div>
@@ -221,7 +221,7 @@ export function SettingsPage({ settings, onUpdate, onDataChange }: SettingsPageP
 
       {/* Exercise references */}
       <Card>
-        <h2 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">Referencias de ejercicios</h2>
+        <h2 className="section-label mb-4">Referencias de ejercicios</h2>
 
         <div className="space-y-4">
           <label className="flex items-center justify-between gap-3 cursor-pointer">
@@ -252,7 +252,7 @@ export function SettingsPage({ settings, onUpdate, onDataChange }: SettingsPageP
 
       {/* Data management */}
       <Card>
-        <h2 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">Datos</h2>
+        <h2 className="section-label mb-4">Datos</h2>
         <DataManagement onDataChange={onDataChange} />
       </Card>
 

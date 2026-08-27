@@ -70,7 +70,7 @@ export function ExerciseHistory({ exerciseName, logs, onClose }: ExerciseHistory
             <Dumbbell size={24} className="text-primary-600 dark:text-primary-400" />
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400">Último peso registrado</p>
-              <p className="text-xl font-display font-bold text-primary-600 dark:text-primary-400 tabular-nums">{lastWeight} kg</p>
+              <p className="font-mono text-metric-lg text-content">{lastWeight} kg</p>
             </div>
           </div>
         )}

@@ -114,10 +114,10 @@ export function RoutinesPage({ routines, exercises, onAdd, onUpdate, onDelete, o
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-display font-bold tracking-tight text-gray-900 dark:text-white">Rutinas</h1>
-        <div className="flex gap-2">
+    <div className="space-y-6">
+      <div className="mb-12 flex items-center justify-between gap-4">
+        <h1 className="text-display text-content">Rutinas</h1>
+        <div className="flex shrink-0 gap-2">
           <Button variant="secondary" size="sm" onClick={() => setImportOpen(true)}>
             <Download size={15} /> Importar
           </Button>
@@ -128,16 +128,16 @@ export function RoutinesPage({ routines, exercises, onAdd, onUpdate, onDelete, o
       </div>
 
       {resumeSession && !resumeOpen && !activeRoutine && (
-        <div className="flex items-center gap-3 rounded-2xl border border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20 px-4 py-3">
-          <Dumbbell size={24} className="text-primary-600 dark:text-primary-400 shrink-0" />
+        <div className="flex items-center gap-4 rounded-card bg-ink-900 px-5 py-4">
+          <Dumbbell size={20} className="shrink-0 text-white/70" />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">Entrenamiento en curso</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{resumeSession.routineName}</p>
+            <p className="truncate text-body-strong text-white">Entrenamiento en curso</p>
+            <p className="truncate text-caption text-white/50">{resumeSession.routineName}</p>
           </div>
           <Button size="sm" onClick={() => setResumeOpen(true)}>Retomar</Button>
           <button
             onClick={() => { storage.clearActiveSession(); setResumeSession(null); }}
-            className="text-xs text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 px-1"
+            className="px-1 text-caption text-white/40 transition-colors hover:text-white"
           >
             Descartar
           </button>

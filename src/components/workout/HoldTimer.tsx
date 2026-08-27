@@ -63,7 +63,7 @@ export function HoldTimer({ seconds, onComplete, onStop }: HoldTimerProps) {
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-ink-950/98 backdrop-blur-md p-6">
-      <p className="text-amber-400 text-xs uppercase tracking-[0.2em] font-semibold mb-8">Aguantá</p>
+      <p className="mb-8 text-overline uppercase text-accent-400">Aguantá</p>
 
       <div className="relative w-56 h-56 mb-10">
         <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">

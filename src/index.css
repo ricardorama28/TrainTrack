@@ -115,14 +115,16 @@
     @apply text-overline uppercase text-content-muted;
   }
 
-  /* Filete superior de marca para la tarjeta destacada. */
+  /* Filete superior de la tarjeta destacada. Neutro a propósito: el
+     presupuesto de lima de la pantalla se lo llevan el botón principal y el
+     dato clave, y un adorno no compite con ninguno de los dos. */
   .brand-rule::before {
     content: '';
     @apply absolute left-5 right-5 top-0 h-px;
     background: linear-gradient(
       to right,
       transparent,
-      rgb(var(--c-brand) / 0.75),
+      rgb(var(--c-hairline-strong)),
       transparent
     );
   }

@@ -166,8 +166,8 @@ export function ExercisesPage({ logs, routines, exercises, onUpdateExercise }: E
   }
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-display font-bold tracking-tight text-gray-900 dark:text-white">Ejercicios</h1>
+    <div className="space-y-6">
+      <h1 className="mb-12 text-display text-content">Ejercicios</h1>
 
       <input
         type="search"

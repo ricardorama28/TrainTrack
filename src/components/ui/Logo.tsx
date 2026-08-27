@@ -37,7 +37,7 @@ export function LogoWordmark({ size = 28, className = '' }: LogoWordmarkProps) {
   return (
     <div className={`inline-flex items-center gap-2 ${className}`}>
       <Logo size={size} className="text-primary-500" />
-      <span className="font-display font-bold tracking-tight text-gray-900 dark:text-white" style={{ fontSize: size * 0.82 }}>
+      <span className="font-semibold tracking-tight text-content" style={{ fontSize: size * 0.82 }}>
         Train<span className="text-primary-500">Track</span>
       </span>
     </div>

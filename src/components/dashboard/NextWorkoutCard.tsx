@@ -14,21 +14,43 @@ interface NextWorkoutCardProps {
   settings: Settings;
 }
 
-/** Compact, human objective for one exercise. */
-function shortObjective(s: ProgressionSuggestion): string {
+/** Un trozo del objetivo: o una cifra (Mono) o una palabra/unidad (Sans). */
+type Token = { n: string } | { u: string };
+
+/**
+ * El objetivo se devuelve troceado, no como una cadena, para que solo las
+ * cifras caigan en Mono. "Repetir" es una palabra: en Mono a tamaño de métrica
+ * pesaba lo mismo que un PR de carga y desalineaba la columna.
+ */
+function objectiveTokens(s: ProgressionSuggestion): Token[] {
+  const weight = (): Token[] => (s.targetWeight != null ? [{ n: String(s.targetWeight) }, { u: 'kg' }] : []);
+
   switch (s.action) {
     case 'increase-weight':
-      return `${s.targetWeight} kg`;
     case 'consolidate':
-      return `${s.targetWeight} kg`;
+      return weight();
     case 'add-reps':
     case 'first-time':
       return s.targetTotalReps != null
-        ? `${s.targetWeight != null ? `${s.targetWeight} kg · ` : ''}${s.targetTotalReps}+ reps`
-        : `${s.targetWeight != null ? `${s.targetWeight} kg` : ''}`;
+        ? [...weight(), { n: `${s.targetTotalReps}+` }, { u: 'reps' }]
+        : weight();
     default:
-      return s.targetWeight != null ? `${s.targetWeight} kg` : 'Repetir';
+      return s.targetWeight != null ? weight() : [{ u: 'Repetir' }];
   }
+}
+
+function Objective({ suggestion }: { suggestion: ProgressionSuggestion }) {
+  return (
+    <span className="flex items-baseline gap-1 whitespace-nowrap">
+      {objectiveTokens(suggestion).map((t, i) =>
+        'n' in t ? (
+          <span key={i} className="font-mono text-metric text-content">{t.n}</span>
+        ) : (
+          <span key={i} className="text-caption text-content-muted">{t.u}</span>
+        )
+      )}
+    </span>
+  );
 }
 
 export function NextWorkoutCard({ logs, routines, settings }: NextWorkoutCardProps) {
@@ -90,9 +112,7 @@ export function NextWorkoutCard({ logs, routines, settings }: NextWorkoutCardPro
                 className="grid w-full grid-cols-[1fr_auto] items-baseline gap-4 py-4 text-left"
               >
                 <span className="truncate text-body text-content">{row.name}</span>
-                <span className="font-mono text-metric text-content">
-                  {shortObjective(row.suggestion)}
-                </span>
+                <Objective suggestion={row.suggestion} />
               </button>
               {isOpen && (
                 <div className="animate-fade-in space-y-1 pb-4 -mt-2 text-caption text-content-muted">

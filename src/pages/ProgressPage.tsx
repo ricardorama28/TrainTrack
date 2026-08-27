@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { BarChart3 } from 'lucide-react';
-import { Card } from '../components/ui/Card';
+import { Card, SectionLabel } from '../components/ui/Card';
 import { EmptyState } from '../components/ui/EmptyState';
 import { MuscleVolumeChart } from '../components/charts/MuscleVolumeChart';
 import { WeeklyVolumeChart } from '../components/charts/WeeklyVolumeChart';
@@ -23,51 +23,57 @@ export function ProgressPage({ logs, exercises, settings }: ProgressPageProps) {
   const hasData = logs.some(l => l.exercises.some(e => e.sets.length > 0));
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-display font-bold tracking-tight text-gray-900 dark:text-white">Progreso</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Análisis de tu entrenamiento</p>
-      </div>
+    <div>
+      <header className="mb-12">
+        <h1 className="text-display text-content">Progreso</h1>
+        <p className="mt-1 text-caption text-content-muted">Análisis de tu entrenamiento</p>
+      </header>
 
       {!hasData ? (
         <EmptyState icon={<BarChart3 />} title="Todavía no hay datos" description="Registrá algunos entrenamientos para ver tu progreso, PRs y distribución muscular." />
       ) : (
-        <>
-          <ProgressHighlights logs={logs} exercises={exercises} settings={settings} />
+        <div className="space-y-6">
+          <ProgressHighlights logs={logs} exercises={exercises} settings={settings} label="Destacados" />
 
           <Card>
-            <div className="mb-1">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-primary-500">Distribución del entrenamiento</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Series de trabajo por grupo muscular · esta semana</p>
-            </div>
+            <SectionLabel>Distribución del entrenamiento</SectionLabel>
+            <p className="mt-1.5 text-caption text-content-muted">
+              Series de trabajo por grupo muscular · esta semana
+            </p>
             {weekly.length > 0 ? (
               <MuscleVolumeChart data={weekly} />
             ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400 py-4 text-center">Sin series registradas esta semana.</p>
+              <p className="py-6 text-center text-caption text-content-muted">Sin series registradas esta semana.</p>
             )}
           </Card>
 
           <Card>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-primary-500 mb-2">Frecuencia por músculo</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Días de entrenamiento por semana (promedio, últimas 4)</p>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+            <SectionLabel>Frecuencia por músculo</SectionLabel>
+            <p className="mt-1.5 mb-4 text-caption text-content-muted">
+              Días de entrenamiento por semana (promedio, últimas 4)
+            </p>
+            {/* Sin filete entre filas: en dos columnas los cortes no se alinean
+                y lo que se lee es una rejilla rota, no una tabla. */}
+            <div className="grid grid-cols-2 gap-x-6 gap-y-3">
               {(Object.keys(frequency) as MuscleGroup[])
                 .sort((a, b) => (frequency[b] ?? 0) - (frequency[a] ?? 0))
                 .map(mg => (
-                  <div key={mg} className="flex items-center justify-between text-sm">
-                    <span className="text-gray-700 dark:text-gray-200">{MUSCLE_LABELS[mg]}</span>
-                    <span className="font-semibold text-gray-900 dark:text-white tabular-nums">{(frequency[mg] ?? 0).toFixed(1)}×</span>
+                  <div key={mg} className="grid grid-cols-[1fr_auto] items-baseline gap-3">
+                    <span className="truncate text-body text-content">{MUSCLE_LABELS[mg]}</span>
+                    <span className="font-mono text-metric text-content">
+                      {(frequency[mg] ?? 0).toFixed(1)}×
+                    </span>
                   </div>
                 ))}
             </div>
           </Card>
 
           <Card>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-primary-500 mb-1">Tendencia de volumen</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Series de trabajo por semana · apoyo</p>
+            <SectionLabel>Tendencia de volumen</SectionLabel>
+            <p className="mt-1.5 text-caption text-content-muted">Series de trabajo por semana · apoyo</p>
             <WeeklyVolumeChart data={byWeek} metric="sets" />
           </Card>
-        </>
+        </div>
       )}
     </div>
   );
