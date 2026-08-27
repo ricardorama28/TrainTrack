@@ -76,14 +76,20 @@ export function CalendarPage({ logs, routines, onSaveLog, onDeleteLog }: Calenda
         + Registrar entrenamiento de hoy
       </Button>
 
-      <DayDetail
-        date={selectedDate}
-        log={selectedLog}
-        routines={routines}
-        onClose={() => setSelectedDate(null)}
-        onSave={onSaveLog}
-        onDelete={onDeleteLog}
-      />
+      {/* Keyed by the selected date so the modal remounts per tap — this
+          re-seeds DayDetail's derived state (date, and the log's type/routine/
+          duration/feeling/notes) instead of holding the first (null) value. */}
+      {selectedDate && (
+        <DayDetail
+          key={selectedDate}
+          date={selectedDate}
+          log={selectedLog}
+          routines={routines}
+          onClose={() => setSelectedDate(null)}
+          onSave={onSaveLog}
+          onDelete={onDeleteLog}
+        />
+      )}
     </div>
   );
 }

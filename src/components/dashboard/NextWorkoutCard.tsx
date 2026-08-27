@@ -4,25 +4,13 @@ import { Target, ArrowRight } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { suggestNextTarget } from '../../lib/progression';
 import { getExercisePerformances, getLastPerformance } from '../../lib/analytics';
+import { pickNextRoutine } from '../../lib/nextWorkout';
 import type { WorkoutLog, Routine, Settings, ProgressionSuggestion } from '../../types';
 
 interface NextWorkoutCardProps {
   logs: WorkoutLog[];
   routines: Routine[];
   settings: Settings;
-}
-
-/** Pick today's routine, else the next upcoming suggested day, else the first workout. */
-function pickRoutine(routines: Routine[]): { routine: Routine; dayOffset: number } | null {
-  const workouts = routines.filter(r => r.type === 'workout');
-  if (workouts.length === 0) return null;
-  const todayDow = new Date().getDay();
-  for (let offset = 0; offset < 7; offset++) {
-    const day = (todayDow + offset) % 7;
-    const match = workouts.find(r => r.suggestedDays?.includes(day));
-    if (match) return { routine: match, dayOffset: offset };
-  }
-  return { routine: workouts[0], dayOffset: 0 };
 }
 
 /** Compact, human objective for one exercise (no emoji; a Target icon precedes it). */
@@ -51,7 +39,7 @@ export function NextWorkoutCard({ logs, routines, settings }: NextWorkoutCardPro
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  const picked = useMemo(() => pickRoutine(routines), [routines]);
+  const picked = useMemo(() => pickNextRoutine(routines, logs), [routines, logs]);
 
   const rows = useMemo(() => {
     if (!picked) return [];
