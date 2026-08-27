@@ -5,7 +5,7 @@ import { WeeklySummary } from '../components/dashboard/WeeklySummary';
 import { MotivationalQuote } from '../components/dashboard/MotivationalQuote';
 import { NextWorkoutCard } from '../components/dashboard/NextWorkoutCard';
 import { ProgressHighlights } from '../components/dashboard/ProgressHighlights';
-import { Logo } from '../components/ui/Logo';
+import { Mark } from '../components/brand/Mark';
 import { Wordmark } from '../components/brand/Wordmark';
 import { Button } from '../components/ui/Button';
 import { calculateCurrentStreak } from '../lib/streaks';
@@ -59,7 +59,7 @@ export function Dashboard({ logs, routines, exercises, settings }: DashboardProp
             decir lo mismo dos veces. */}
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Logo size={28} className="shrink-0 text-content" />
+            <Mark size={28} className="shrink-0 text-content" />
             <Wordmark className="text-xl" />
           </div>
           <button
