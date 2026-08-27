@@ -112,10 +112,14 @@ export default {
         'body-strong': ['0.9375rem', { lineHeight: '1.5',  letterSpacing: '0',       fontWeight: '500' }],
         'caption':     ['0.8125rem', { lineHeight: '1.4',  letterSpacing: '0',       fontWeight: '400' }],
         'overline':    ['0.6875rem', { lineHeight: '1',    letterSpacing: '0.08em',  fontWeight: '500' }],
-        // Cifras — siempre en Mono, siempre tabulares.
+        /* Cifras — siempre en Mono, siempre tabulares. Geist Mono viene con un
+           avance pensado para código, no para datos: a estos tamaños los
+           dígitos se leen sueltos, así que los tres pasos llevan el mismo
+           tracking negativo. Es uniforme a propósito — el avance monoespaciado
+           no cambia con el cuerpo, y variarlo desalinearía las columnas. */
         'metric-xl':   ['3rem',      { lineHeight: '1',    letterSpacing: '-0.02em', fontWeight: '500' }],
-        'metric-lg':   ['1.75rem',   { lineHeight: '1.1',  letterSpacing: '-0.01em', fontWeight: '500' }],
-        'metric':      ['1rem',      { lineHeight: '1.4',  letterSpacing: '0',       fontWeight: '500' }],
+        'metric-lg':   ['1.75rem',   { lineHeight: '1.1',  letterSpacing: '-0.02em', fontWeight: '500' }],
+        'metric':      ['1rem',      { lineHeight: '1.4',  letterSpacing: '-0.02em', fontWeight: '500' }],
       },
       borderRadius: {
         // Radios escalonados: contenedor > tarjeta > control > chip.
