@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Target, ArrowRight } from 'lucide-react';
-import { Card } from '../ui/Card';
+import { ArrowRight } from 'lucide-react';
+import { Card, SectionLabel } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { suggestNextTarget } from '../../lib/progression';
 import { getExercisePerformances, getLastPerformance } from '../../lib/analytics';
@@ -14,13 +14,13 @@ interface NextWorkoutCardProps {
   settings: Settings;
 }
 
-/** Compact, human objective for one exercise (no emoji; a Target icon precedes it). */
+/** Compact, human objective for one exercise. */
 function shortObjective(s: ProgressionSuggestion): string {
   switch (s.action) {
     case 'increase-weight':
-      return `subí a ${s.targetWeight} kg`;
+      return `${s.targetWeight} kg`;
     case 'consolidate':
-      return `consolidá ${s.targetWeight} kg`;
+      return `${s.targetWeight} kg`;
     case 'add-reps':
     case 'first-time':
       return s.targetTotalReps != null
@@ -29,11 +29,6 @@ function shortObjective(s: ProgressionSuggestion): string {
     default:
       return s.targetWeight != null ? `${s.targetWeight} kg` : 'Repetir';
   }
-}
-
-/** Whether the objective merits the target icon (a real prescription, not plain repeat). */
-function hasTarget(s: ProgressionSuggestion): boolean {
-  return s.action !== 'repeat';
 }
 
 export function NextWorkoutCard({ logs, routines, settings }: NextWorkoutCardProps) {
@@ -52,49 +47,55 @@ export function NextWorkoutCard({ logs, routines, settings }: NextWorkoutCardPro
     });
   }, [picked, logs, settings]);
 
-  if (!picked) return null;
+  // Un estado vacío es una invitación a actuar, no un hueco: el bloque hero no
+  // desaparece cuando todavía no hay nada programado.
+  if (!picked) {
+    return (
+      <Card tone="hero">
+        <SectionLabel>Próximo entrenamiento</SectionLabel>
+        <h2 className="mt-3 text-title text-content">Todavía no hay nada programado</h2>
+        <p className="mt-2 text-caption text-content-muted">
+          Creá una rutina y TrainTrack se encarga de decirte qué toca cada día.
+        </p>
+        <Button className="mt-5" onClick={() => navigate('/routines')}>
+          Crear una rutina <ArrowRight size={15} strokeWidth={2} />
+        </Button>
+      </Card>
+    );
+  }
 
   const whenLabel = picked.dayOffset === 0 ? 'Hoy' : picked.dayOffset === 1 ? 'Mañana' : 'Próximo';
 
   return (
     <Card tone="hero">
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-overline uppercase text-content-subtle">Próximo entrenamiento</p>
-          <h3 className="mt-1.5 font-display text-2xl font-bold leading-tight tracking-tight text-content">
-            {whenLabel}
-            <span className="text-content-subtle"> · </span>
-            <span className="text-primary-600 dark:text-primary-400">{picked.routine.name}</span>
-          </h3>
-        </div>
-        <Button size="sm" className="shrink-0" onClick={() => navigate('/routines')}>
-          Empezar <ArrowRight size={15} strokeWidth={2.5} />
-        </Button>
-      </div>
+      <SectionLabel>Próximo entrenamiento</SectionLabel>
 
-      <div className="space-y-1">
+      <h2 className="mt-3 text-title text-content">
+        {whenLabel} <span className="text-content-subtle">·</span> {picked.routine.name}
+      </h2>
+
+      <div className="mt-4 divide-y divide-hairline">
         {rows.map(row => {
           const isOpen = expanded === row.id;
           const lastLabel = row.last
             ? row.last.workingSets.map(s => s.reps ?? s.seconds ?? '—').join('/')
             : null;
           return (
-            <div
-              key={row.id}
-              className={`rounded-xl transition-colors duration-200 ${isOpen ? 'bg-surface-2' : 'hover:bg-surface-2/60'}`}
-            >
+            <div key={row.id}>
+              {/* Dos columnas: la métrica queda pegada al texto y alineada con
+                  las de arriba y abajo, en vez de flotar contra el borde de la
+                  pantalla con 200px de nada en medio. */}
               <button
                 onClick={() => setExpanded(isOpen ? null : row.id)}
-                className="w-full flex items-center justify-between gap-3 px-3 py-2.5 text-left"
+                className="grid w-full grid-cols-[1fr_auto] items-baseline gap-4 py-4 text-left"
               >
-                <span className="truncate text-sm font-medium text-content">{row.name}</span>
-                <span className="inline-flex shrink-0 items-center gap-1.5 text-xs font-semibold tabular-nums text-content-muted">
-                  {hasTarget(row.suggestion) && <Target size={12} className="text-primary-500" />}
+                <span className="truncate text-body text-content">{row.name}</span>
+                <span className="font-mono text-metric text-content">
                   {shortObjective(row.suggestion)}
                 </span>
               </button>
               {isOpen && (
-                <div className="animate-fade-in space-y-1 px-3 pb-3 -mt-0.5 text-xs leading-relaxed text-content-muted">
+                <div className="animate-fade-in space-y-1 pb-4 -mt-2 text-caption text-content-muted">
                   {lastLabel && <p>Último: {lastLabel}</p>}
                   {row.suggestion.targetReps && row.suggestion.targetReps.length > 0 && (
                     <p>Referencia: {row.suggestion.targetReps.join('/')}</p>
@@ -106,6 +107,11 @@ export function NextWorkoutCard({ logs, routines, settings }: NextWorkoutCardPro
           );
         })}
       </div>
+
+      {/* La única acción principal de la pantalla, y el único fondo lima. */}
+      <Button className="mt-5" fullWidth onClick={() => navigate('/routines')}>
+        Empezar <ArrowRight size={15} strokeWidth={2} />
+      </Button>
     </Card>
   );
 }

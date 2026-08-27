@@ -98,15 +98,24 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['"Space Grotesk"', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['"Geist Variable"', 'Geist', 'system-ui', 'sans-serif'],
+        mono: ['"Geist Mono Variable"', '"Geist Mono"', 'ui-monospace', 'monospace'],
       },
       fontSize: {
-        // Escala editorial: cifras protagonistas + microtipografía legible.
-        'metric-xl': ['3.5rem', { lineHeight: '1', letterSpacing: '-0.04em', fontWeight: '700' }],
-        'metric-lg': ['2.5rem', { lineHeight: '1', letterSpacing: '-0.035em', fontWeight: '700' }],
-        'metric':    ['1.75rem', { lineHeight: '1.05', letterSpacing: '-0.03em', fontWeight: '700' }],
-        'overline':  ['0.6875rem', { lineHeight: '1', letterSpacing: '0.06em', fontWeight: '600' }],
+        /* Escala cerrada: estos son los ÚNICOS tamaños permitidos.
+           La firma de la app son las cifras (Mono), así que el texto se
+           mantiene callado y los pesos altos quedan racionados: 600 solo para
+           `display` y `title`, cuerpo en 400, énfasis en 500. */
+        'display':     ['2rem',      { lineHeight: '1.05', letterSpacing: '-0.03em', fontWeight: '600' }],
+        'title':       ['1.375rem',  { lineHeight: '1.2',  letterSpacing: '-0.02em', fontWeight: '600' }],
+        'body':        ['0.9375rem', { lineHeight: '1.5',  letterSpacing: '0',       fontWeight: '400' }],
+        'body-strong': ['0.9375rem', { lineHeight: '1.5',  letterSpacing: '0',       fontWeight: '500' }],
+        'caption':     ['0.8125rem', { lineHeight: '1.4',  letterSpacing: '0',       fontWeight: '400' }],
+        'overline':    ['0.6875rem', { lineHeight: '1',    letterSpacing: '0.08em',  fontWeight: '500' }],
+        // Cifras — siempre en Mono, siempre tabulares.
+        'metric-xl':   ['3rem',      { lineHeight: '1',    letterSpacing: '-0.02em', fontWeight: '500' }],
+        'metric-lg':   ['1.75rem',   { lineHeight: '1.1',  letterSpacing: '-0.01em', fontWeight: '500' }],
+        'metric':      ['1rem',      { lineHeight: '1.4',  letterSpacing: '0',       fontWeight: '500' }],
       },
       borderRadius: {
         // Radios escalonados: contenedor > tarjeta > control > chip.

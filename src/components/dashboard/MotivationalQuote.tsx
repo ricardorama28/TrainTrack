@@ -57,9 +57,9 @@ export function MotivationalQuote() {
   const message = MESSAGES[day][slot];
 
   // Antes: caja lima centrada, un bloque más compitiendo por atención.
-  // Ahora: nota editorial con filete de marca — presente, pero en su sitio.
+  // Ahora: nota al pie, fuera de tarjeta. Está para quien la busca.
   return (
-    <p className="border-l-2 border-primary-500/60 py-1 pl-4 text-[13px] italic leading-relaxed text-content-muted">
+    <p className="border-l border-hairline-strong py-1 pl-4 text-caption text-content-subtle">
       {message}
     </p>
   );

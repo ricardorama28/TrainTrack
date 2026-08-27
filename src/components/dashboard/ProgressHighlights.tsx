@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Trophy, ArrowUp, Minus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Card, SectionLabel } from '../ui/Card';
 import {
   getExercisePerformances, getLatestPRs, detectTrend, detectStalled, getCurrentLoadBlock,
@@ -10,6 +10,9 @@ interface ProgressHighlightsProps {
   logs: WorkoutLog[];
   exercises: Exercise[];
   settings: Settings;
+  /** Máximo de filas visibles; el resto queda tras un enlace a Progreso.
+   *  Sin límite (la página de Progreso) se muestran todas. */
+  limit?: number;
 }
 
 type Kind = 'pr' | 'up' | 'stalled';
@@ -22,7 +25,8 @@ interface Highlight {
 
 const ORDER: Record<Kind, number> = { pr: 0, up: 1, stalled: 2 };
 
-export function ProgressHighlights({ logs, exercises, settings }: ProgressHighlightsProps) {
+export function ProgressHighlights({ logs, exercises, settings, limit }: ProgressHighlightsProps) {
+  const navigate = useNavigate();
   const highlights = useMemo<Highlight[]>(() => {
     const threshold = settings.stalledSessionThreshold ?? 3;
     const items: Highlight[] = [];
@@ -47,42 +51,46 @@ export function ProgressHighlights({ logs, exercises, settings }: ProgressHighli
         items.push({ name: ex.name, kind: 'up', weight: currentWeight, text: 'progresando' });
       }
     }
-    return items.sort((a, b) => ORDER[a.kind] - ORDER[b.kind]).slice(0, 6);
+    return items.sort((a, b) => ORDER[a.kind] - ORDER[b.kind]);
   }, [logs, exercises, settings]);
 
   if (highlights.length === 0) return null;
 
-  const Icon: Record<Kind, typeof Trophy> = { pr: Trophy, up: ArrowUp, stalled: Minus };
-  // El icono va sobre un disco tintado: separa las tres señales de un vistazo
-  // sin pintar la fila entera de color.
-  const chip: Record<Kind, string> = {
-    pr:      'bg-accent-500/12 text-accent-600 dark:text-accent-400',
-    up:      'bg-primary-500/12 text-primary-600 dark:text-primary-400',
-    stalled: 'bg-surface-3 text-content-subtle',
-  };
+  // Tres, no seis: seis filas idénticas son una lista, no un logro.
+  const visible = limit != null ? highlights.slice(0, limit) : highlights;
+  const rest = highlights.length - visible.length;
 
   return (
     <Card>
-      <SectionLabel>Progreso</SectionLabel>
+      <SectionLabel
+        action={
+          rest > 0 ? (
+            <button
+              onClick={() => navigate('/progreso')}
+              className="text-caption text-content-muted underline-offset-4 hover:text-content hover:underline"
+            >
+              Ver los {highlights.length}
+            </button>
+          ) : undefined
+        }
+      >
+        Progreso
+      </SectionLabel>
+
+      {/* Sin icono por fila: si aparece en todas, es textura, no información.
+          La distinción entre PR, avance y estancamiento la lleva el texto. */}
       <div className="mt-3 divide-y divide-hairline">
-        {highlights.map((h, i) => {
-          const I = Icon[h.kind];
-          return (
-            <div key={i} className="flex items-center gap-2.5 py-2 first:pt-0 last:pb-0">
-              <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-lg ${chip[h.kind]}`}>
-                <I size={13} strokeWidth={2.5} />
-              </span>
-              <span className="truncate text-sm font-medium text-content">{h.name}</span>
-              <span className="ml-auto shrink-0 text-xs tabular-nums text-content-muted">
-                {h.weight > 0 && (
-                  <span className="font-semibold text-content">{h.weight} kg</span>
-                )}
-                {h.weight > 0 ? ' · ' : ''}
-                {h.text}
-              </span>
+        {visible.map((h, i) => (
+          <div key={i} className="grid grid-cols-[1fr_auto] items-baseline gap-4 py-4 first:pt-1">
+            <div className="min-w-0">
+              <p className="truncate text-body text-content">{h.name}</p>
+              <p className="text-caption text-content-muted">{h.text}</p>
             </div>
-          );
-        })}
+            {h.weight > 0 && (
+              <span className="font-mono text-metric text-content">{h.weight} kg</span>
+            )}
+          </div>
+        ))}
       </div>
     </Card>
   );

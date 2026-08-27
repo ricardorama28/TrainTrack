@@ -1,13 +1,14 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Calendar, ClipboardList, Dumbbell, TrendingUp, Settings2 } from 'lucide-react';
+import { Home, Calendar, ClipboardList, Dumbbell, TrendingUp } from 'lucide-react';
 
+// Cinco destinos, no seis: Ajustes no es un lugar al que se vuelve a diario, y
+// ocupaba un sexto del ancho permanente. Vive en la cabecera del Dashboard.
 const NAV_ITEMS = [
   { to: '/',          Icon: Home,          label: 'Inicio'     },
   { to: '/calendar',  Icon: Calendar,      label: 'Calendario' },
   { to: '/routines',  Icon: ClipboardList, label: 'Rutinas'    },
   { to: '/exercises', Icon: Dumbbell,      label: 'Ejercicios' },
   { to: '/progreso',  Icon: TrendingUp,    label: 'Progreso'   },
-  { to: '/settings',  Icon: Settings2,     label: 'Ajustes'    },
 ];
 
 /**
@@ -28,16 +29,19 @@ export function BottomNav() {
               end={to === '/'}
               className={({ isActive }) =>
                 `group relative flex-1 flex flex-col items-center justify-center gap-1 rounded-[1.1rem] py-2
-                 text-[9.5px] font-semibold tracking-tight transition-colors duration-200 ${
-                   isActive ? 'text-primary-300' : 'text-gray-400 hover:text-gray-200'
+                 text-[10px] font-medium tracking-tight transition-colors duration-200 ${
+                   isActive ? 'text-white' : 'text-gray-400 hover:text-gray-200'
                  }`
               }
             >
               {({ isActive }) => (
                 <>
-                  {/* Píldora activa: superficie + punto de marca. */}
+                  {/* Píldora activa neutra a propósito: el dock es cromo
+                      presente en todas las pantallas, así que no gasta nada
+                      del presupuesto de lima, que queda entero para el
+                      contenido. */}
                   <span
-                    className={`absolute inset-0 rounded-[1.1rem] bg-primary-500/[0.14] ring-1 ring-inset ring-primary-400/25 transition-all duration-300 ease-out-expo ${
+                    className={`absolute inset-0 rounded-[1.1rem] bg-white/[0.10] ring-1 ring-inset ring-white/[0.08] transition-all duration-300 ease-out-expo ${
                       isActive ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
                     }`}
                     aria-hidden="true"

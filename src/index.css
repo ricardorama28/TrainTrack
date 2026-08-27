@@ -42,12 +42,19 @@
   }
 
   html {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Geist Variable', Geist, system-ui, sans-serif;
     -webkit-tap-highlight-color: transparent;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* Números de ancho fijo y cero corta: es una app de datos. */
-    font-feature-settings: 'cv05' 1, 'ss03' 1;
+  }
+
+  /* Cifras tabulares. Sin esto las columnas de kg y reps bailan fila a fila,
+     y eso solo ya se lee como amateur. Geist Mono ya es monoespaciada, pero la
+     declaración explícita evita regresiones si alguna cifra cae en Sans. */
+  .font-mono,
+  [class*='text-metric'] {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
   }
 
   body {
@@ -86,12 +93,12 @@
 
 @layer components {
   .label {
-    @apply block text-sm font-medium text-content-muted mb-1.5;
+    @apply block text-caption text-content-muted mb-1.5;
   }
 
   .input {
     @apply w-full px-3.5 py-2.5 rounded-xl border border-hairline
-           bg-surface-2 text-content text-sm
+           bg-surface-2 text-content text-body
            focus:outline-none focus:border-primary-500/60 focus:bg-surface
            placeholder:text-content-subtle
            transition-colors duration-200;
@@ -101,10 +108,11 @@
     @apply max-w-lg mx-auto px-4 pt-6 pb-32;
   }
 
-  /* Etiqueta de sección: minúsculas y discreta. Reemplaza el
-     `uppercase tracking-wider` en lima que se repetía en cada bloque. */
+  /* Etiqueta de sección. El lima NO se gasta acá: el presupuesto de color deja
+     como mucho un fondo lima y un dato lima por pantalla, y ninguno de los dos
+     es una etiqueta. Máximo una por bloque. */
   .section-label {
-    @apply text-[13px] font-semibold tracking-tight text-content-muted;
+    @apply text-overline uppercase text-content-muted;
   }
 
   /* Filete superior de marca para la tarjeta destacada. */

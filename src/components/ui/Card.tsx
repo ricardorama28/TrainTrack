@@ -31,7 +31,9 @@ export function Card({
   padding = true,
   tone = 'default',
 }: CardProps) {
-  const p = padding ? (tone === 'hero' ? 'p-5' : 'p-4') : '';
+  // 20px, no 16: le da presencia y evita que la tarjeta se lea como una fila
+  // de tabla pegada a su propio borde.
+  const p = padding ? 'p-5' : '';
   const interactive = onClick
     ? 'cursor-pointer transition-[transform,border-color,box-shadow] duration-200 ease-out-expo hover:border-hairline-strong hover:shadow-lift active:scale-[0.985]'
     : '';
@@ -58,7 +60,7 @@ interface SectionLabelProps {
  */
 export function SectionLabel({ children, action, className = '' }: SectionLabelProps) {
   return (
-    <div className={`flex items-baseline justify-between gap-3 ${className}`}>
+    <div className={`flex items-baseline justify-between gap-4 ${className}`}>
       <h3 className="section-label">{children}</h3>
       {action}
     </div>

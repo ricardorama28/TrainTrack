@@ -94,6 +94,7 @@ function AppShell() {
                 <CalendarPage
                   logs={logs}
                   routines={routines}
+                  settings={settings}
                   onSaveLog={addOrUpdateLog}
                   onDeleteLog={deleteLog}
                 />

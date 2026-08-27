@@ -8,12 +8,16 @@ interface WeeklySummaryProps {
   settings: Settings;
 }
 
-/** Un hue por familia: marca = hecho, frío = descanso, rojo = fallo. */
+/**
+ * "Entrenado" se pinta en tinta sólida, no en lima: el presupuesto de color
+ * deja un solo fondo lima por pantalla y en el Dashboard se lo lleva "Empezar".
+ * El contraste tinta/superficie distingue el día cumplido igual de bien.
+ */
 const TYPE_STYLES: Record<string, string> = {
-  workout:       'bg-primary-500 text-ink-950',
-  rest:          'bg-sea-500/20 text-sea-700 dark:text-sea-300 ring-1 ring-inset ring-sea-500/30',
-  'active-rest': 'bg-sea-500/10 text-sea-600 dark:text-sea-300/90 ring-1 ring-inset ring-sea-500/20',
-  missed:        'bg-red-500/12 text-red-600 dark:text-red-400 ring-1 ring-inset ring-red-500/25',
+  workout:       'bg-content text-canvas',
+  rest:          'bg-sea-500/15 text-sea-700 dark:text-sea-300',
+  'active-rest': 'bg-sea-500/8 text-sea-600 dark:text-sea-300/90',
+  missed:        'bg-red-500/12 text-red-600 dark:text-red-400',
 };
 
 export function WeeklySummary({ logs, settings }: WeeklySummaryProps) {
@@ -23,15 +27,14 @@ export function WeeklySummary({ logs, settings }: WeeklySummaryProps) {
 
   const workoutCount = weekDays.filter(d => logMap.get(d)?.type === 'workout').length;
   const goal = settings.weeklyGoal;
-  const met = workoutCount >= goal;
 
   return (
     <Card>
       <SectionLabel
         action={
-          <span className="font-display text-base font-bold tabular-nums tracking-tight text-content">
+          <span className="font-mono text-metric-lg text-content">
             {workoutCount}
-            <span className="text-content-subtle font-sans text-sm font-medium">/{goal}</span>
+            <span className="text-content-subtle">/{goal}</span>
           </span>
         }
       >
@@ -39,12 +42,12 @@ export function WeeklySummary({ logs, settings }: WeeklySummaryProps) {
       </SectionLabel>
 
       {/* Medidor segmentado: se lee cuántas sesiones faltan, no un porcentaje. */}
-      <div className="mt-3 flex gap-1" aria-label={`${workoutCount} de ${goal} entrenamientos`}>
+      <div className="mt-4 flex gap-1" aria-label={`${workoutCount} de ${goal} entrenamientos`}>
         {Array.from({ length: Math.max(goal, workoutCount) }, (_, i) => (
           <span
             key={i}
-            className={`h-1.5 flex-1 rounded-full origin-left animate-meter ${
-              i < workoutCount ? (met ? 'bg-primary-500' : 'bg-primary-500/75') : 'bg-surface-3'
+            className={`h-1 flex-1 rounded-full origin-left animate-meter ${
+              i < workoutCount ? 'bg-content' : 'bg-surface-3'
             }`}
             style={{ animationDelay: `${i * 55}ms` }}
           />
@@ -61,15 +64,13 @@ export function WeeklySummary({ logs, settings }: WeeklySummaryProps) {
           return (
             <div key={date} className="flex flex-1 flex-col items-center gap-1.5">
               <span
-                className={`text-[10px] font-semibold uppercase tracking-wide ${
-                  isToday ? 'text-content' : 'text-content-subtle'
-                }`}
+                className={`text-overline uppercase ${isToday ? 'text-content' : 'text-content-subtle'}`}
               >
                 {getDayName(date)}
               </span>
               <div
-                className={`grid aspect-square w-full max-w-[38px] place-items-center rounded-xl transition-transform duration-200 ${style} ${
-                  isToday ? 'ring-2 ring-primary-500 ring-offset-2 ring-offset-surface' : ''
+                className={`grid aspect-square w-full max-w-[38px] place-items-center rounded-xl ${style} ${
+                  isToday ? 'ring-1 ring-content-subtle ring-offset-2 ring-offset-surface' : ''
                 }`}
               >
                 {log?.type === 'workout' && <Check size={14} strokeWidth={3} />}

@@ -1,19 +1,22 @@
 import { useState } from 'react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { MonthCalendar } from '../components/calendar/MonthCalendar';
 import { DayDetail } from '../components/calendar/DayDetail';
+import { UpcomingDays } from '../components/dashboard/UpcomingDays';
 import { formatMonthYear } from '../lib/dates';
-import type { WorkoutLog, Routine } from '../types';
+import type { WorkoutLog, Routine, Settings } from '../types';
 
 interface CalendarPageProps {
   logs: WorkoutLog[];
   routines: Routine[];
+  settings: Settings;
   onSaveLog: (log: Omit<WorkoutLog, 'id'>) => void;
   onDeleteLog: (id: string) => void;
 }
 
-export function CalendarPage({ logs, routines, onSaveLog, onDeleteLog }: CalendarPageProps) {
+export function CalendarPage({ logs, routines, settings, onSaveLog, onDeleteLog }: CalendarPageProps) {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
@@ -32,49 +35,57 @@ export function CalendarPage({ logs, routines, onSaveLog, onDeleteLog }: Calenda
   const selectedLog = selectedDate ? logs.find(l => l.date === selectedDate) : undefined;
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-display font-bold tracking-tight text-gray-900 dark:text-white">Calendario</h1>
+    <div>
+      <h1 className="mb-12 text-display text-content">Calendario</h1>
 
-      <Card>
-        {/* Month navigation */}
-        <div className="flex items-center justify-between mb-4">
-          <button
-            onClick={prevMonth}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
-          >
-            ‹
-          </button>
-          <span className="font-semibold text-gray-800 dark:text-gray-100 capitalize">
-            {formatMonthYear(new Date(year, month))}
-          </span>
-          <button
-            onClick={nextMonth}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
-          >
-            ›
-          </button>
-        </div>
+      <div className="space-y-6">
+        <Card>
+          {/* Month navigation */}
+          <div className="mb-5 flex items-center justify-between">
+            <button
+              onClick={prevMonth}
+              className="rounded-full p-2 text-content-muted transition-colors hover:bg-surface-2 hover:text-content"
+              aria-label="Mes anterior"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <span className="text-body-strong capitalize text-content">
+              {formatMonthYear(new Date(year, month))}
+            </span>
+            <button
+              onClick={nextMonth}
+              className="rounded-full p-2 text-content-muted transition-colors hover:bg-surface-2 hover:text-content"
+              aria-label="Mes siguiente"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
 
-        <MonthCalendar
-          year={year}
-          month={month}
-          logs={logs}
-          onDayClick={date => setSelectedDate(date)}
-        />
-      </Card>
+          <MonthCalendar
+            year={year}
+            month={month}
+            logs={logs}
+            onDayClick={date => setSelectedDate(date)}
+          />
+        </Card>
 
-      {/* Quick log today */}
-      <Button
-        fullWidth
-        size="lg"
-        onClick={() => {
-          const today = new Date();
-          const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-          setSelectedDate(dateStr);
-        }}
-      >
-        + Registrar entrenamiento de hoy
-      </Button>
+        {/* Quick log today — la acción principal de esta pantalla. */}
+        <Button
+          fullWidth
+          size="lg"
+          onClick={() => {
+            const today = new Date();
+            const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            setSelectedDate(dateStr);
+          }}
+        >
+          <Plus size={17} strokeWidth={2} /> Registrar entrenamiento de hoy
+        </Button>
+
+        {/* Movido desde el Dashboard: los próximos días son una vista de
+            calendario, no un resumen de inicio. */}
+        <UpcomingDays logs={logs} routines={routines} settings={settings} />
+      </div>
 
       {/* Keyed by the selected date so the modal remounts per tap — this
           re-seeds DayDetail's derived state (date, and the log's type/routine/
