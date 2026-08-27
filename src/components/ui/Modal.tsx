@@ -31,17 +31,25 @@ export function Modal({ open, onClose, title, children, maxWidth = 'max-w-lg' }:
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-ink-950/60 backdrop-blur-[3px] animate-fade-in"
         onClick={onClose}
       />
-      {/* Panel */}
-      <div className={`relative w-full ${maxWidth} bg-white dark:bg-gray-800 rounded-t-3xl sm:rounded-2xl shadow-xl max-h-[92vh] overflow-y-auto`}>
+      {/* Panel — hoja inferior en móvil, tarjeta centrada en desktop. */}
+      <div
+        className={`relative w-full ${maxWidth} animate-sheet-up bg-surface border border-hairline
+                    rounded-t-sheet sm:rounded-hero shadow-float max-h-[92vh] overflow-y-auto`}
+      >
+        {/* Asa de arrastre: señal de "hoja" en móvil. */}
+        <div className="sm:hidden sticky top-0 z-10 flex justify-center pt-3 pb-1 bg-surface">
+          <span className="h-1 w-9 rounded-full bg-hairline-strong" aria-hidden="true" />
+        </div>
+
         {title && (
-          <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h2>
+          <div className="flex items-center justify-between gap-4 px-5 pb-4 pt-3 sm:pt-5 border-b border-hairline">
+            <h2 className="text-lg font-display font-bold tracking-tight text-content">{title}</h2>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"
+              className="shrink-0 p-2 -mr-1 rounded-full text-content-subtle hover:text-content hover:bg-surface-2 transition-colors"
               aria-label="Cerrar"
             >
               <X size={18} />

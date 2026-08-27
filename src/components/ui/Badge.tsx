@@ -8,21 +8,34 @@ interface BadgeProps {
   className?: string;
 }
 
+/**
+ * Cuatro familias, no ocho hues: marca (lima) · cálido (ámbar) · frío (sea) ·
+ * neutro, más el rojo reservado para el fallo real. Los nombres de variante se
+ * conservan para no tocar las llamadas, pero varios convergen a la misma
+ * familia a propósito — la restricción cromática es el cambio.
+ */
 const VARIANTS: Record<BadgeVariant, string> = {
-  green:  'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
-  blue:   'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-  teal:   'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300',
-  red:    'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
-  orange: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
-  gray:   'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
-  yellow: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300',
-  // Repurposed to the brand lime (was violet): muscle-group badges now read on-brand.
-  purple: 'bg-primary-100 text-primary-800 dark:bg-primary-900/40 dark:text-primary-300',
+  // Marca — hecho / logrado
+  green:  'bg-primary-500/12 text-primary-700 dark:text-primary-300 ring-1 ring-inset ring-primary-500/20',
+  // Frío — descanso / registro pasivo
+  blue:   'bg-sea-500/12 text-sea-700 dark:text-sea-300 ring-1 ring-inset ring-sea-500/20',
+  teal:   'bg-sea-500/8 text-sea-600 dark:text-sea-300/90 ring-1 ring-inset ring-sea-500/15',
+  // Cálido — esfuerzo / PR / atención
+  orange: 'bg-accent-500/12 text-accent-700 dark:text-accent-300 ring-1 ring-inset ring-accent-500/20',
+  yellow: 'bg-accent-500/8 text-accent-700 dark:text-accent-300/90 ring-1 ring-inset ring-accent-500/15',
+  // Fallo
+  red:    'bg-red-500/12 text-red-700 dark:text-red-300 ring-1 ring-inset ring-red-500/20',
+  // Neutro — estado por defecto / metadatos
+  gray:   'bg-surface-3 text-content-muted ring-1 ring-inset ring-hairline',
+  // Taxonomía (grupos musculares): neutro con filete, no un color más.
+  purple: 'bg-transparent text-content-muted ring-1 ring-inset ring-hairline-strong',
 };
 
 export function Badge({ children, variant = 'gray', className = '' }: BadgeProps) {
   return (
-    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${VARIANTS[variant]} ${className}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-tight ${VARIANTS[variant]} ${className}`}
+    >
       {children}
     </span>
   );

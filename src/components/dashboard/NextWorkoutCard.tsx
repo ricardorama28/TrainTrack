@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Target, ArrowRight } from 'lucide-react';
 import { Card } from '../ui/Card';
+import { Button } from '../ui/Button';
 import { suggestNextTarget } from '../../lib/progression';
 import { getExercisePerformances, getLastPerformance } from '../../lib/analytics';
 import { pickNextRoutine } from '../../lib/nextWorkout';
@@ -56,40 +57,44 @@ export function NextWorkoutCard({ logs, routines, settings }: NextWorkoutCardPro
   const whenLabel = picked.dayOffset === 0 ? 'Hoy' : picked.dayOffset === 1 ? 'Mañana' : 'Próximo';
 
   return (
-    <Card>
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-wider text-primary-500">Próximo entrenamiento</p>
-          <h3 className="font-bold text-lg text-gray-900 dark:text-white">{whenLabel} · {picked.routine.name}</h3>
+    <Card tone="hero">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-overline uppercase text-content-subtle">Próximo entrenamiento</p>
+          <h3 className="mt-1.5 font-display text-2xl font-bold leading-tight tracking-tight text-content">
+            {whenLabel}
+            <span className="text-content-subtle"> · </span>
+            <span className="text-primary-600 dark:text-primary-400">{picked.routine.name}</span>
+          </h3>
         </div>
-        <button
-          onClick={() => navigate('/routines')}
-          className="inline-flex items-center gap-1 text-sm font-semibold text-primary-600 dark:text-primary-400"
-        >
+        <Button size="sm" className="shrink-0" onClick={() => navigate('/routines')}>
           Empezar <ArrowRight size={15} strokeWidth={2.5} />
-        </button>
+        </Button>
       </div>
 
-      <div className="space-y-1.5">
+      <div className="space-y-1">
         {rows.map(row => {
           const isOpen = expanded === row.id;
           const lastLabel = row.last
             ? row.last.workingSets.map(s => s.reps ?? s.seconds ?? '—').join('/')
             : null;
           return (
-            <div key={row.id} className="rounded-xl bg-gray-50 dark:bg-gray-800/50">
+            <div
+              key={row.id}
+              className={`rounded-xl transition-colors duration-200 ${isOpen ? 'bg-surface-2' : 'hover:bg-surface-2/60'}`}
+            >
               <button
                 onClick={() => setExpanded(isOpen ? null : row.id)}
-                className="w-full flex items-center justify-between gap-2 px-3 py-2 text-left"
+                className="w-full flex items-center justify-between gap-3 px-3 py-2.5 text-left"
               >
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{row.name}</span>
-                <span className="inline-flex items-center gap-1 text-xs font-semibold text-gray-600 dark:text-gray-300 shrink-0 tabular-nums">
+                <span className="truncate text-sm font-medium text-content">{row.name}</span>
+                <span className="inline-flex shrink-0 items-center gap-1.5 text-xs font-semibold tabular-nums text-content-muted">
                   {hasTarget(row.suggestion) && <Target size={12} className="text-primary-500" />}
                   {shortObjective(row.suggestion)}
                 </span>
               </button>
               {isOpen && (
-                <div className="px-3 pb-2.5 -mt-0.5 space-y-0.5 text-xs text-gray-500 dark:text-gray-400">
+                <div className="animate-fade-in space-y-1 px-3 pb-3 -mt-0.5 text-xs leading-relaxed text-content-muted">
                   {lastLabel && <p>Último: {lastLabel}</p>}
                   {row.suggestion.targetReps && row.suggestion.targetReps.length > 0 && (
                     <p>Referencia: {row.suggestion.targetReps.join('/')}</p>

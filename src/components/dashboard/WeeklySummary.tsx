@@ -1,5 +1,5 @@
 import { Check, Moon, Footprints, X } from 'lucide-react';
-import { Card } from '../ui/Card';
+import { Card, SectionLabel } from '../ui/Card';
 import { getWeekDays, getDayName, todayStr } from '../../lib/dates';
 import type { WorkoutLog, Settings } from '../../types';
 
@@ -8,11 +8,12 @@ interface WeeklySummaryProps {
   settings: Settings;
 }
 
-const TYPE_COLORS: Record<string, string> = {
-  workout:     'bg-primary-500',
-  rest:        'bg-blue-400',
-  'active-rest': 'bg-teal-400',
-  missed:      'bg-red-400',
+/** Un hue por familia: marca = hecho, frío = descanso, rojo = fallo. */
+const TYPE_STYLES: Record<string, string> = {
+  workout:       'bg-primary-500 text-ink-950',
+  rest:          'bg-sea-500/20 text-sea-700 dark:text-sea-300 ring-1 ring-inset ring-sea-500/30',
+  'active-rest': 'bg-sea-500/10 text-sea-600 dark:text-sea-300/90 ring-1 ring-inset ring-sea-500/20',
+  missed:        'bg-red-500/12 text-red-600 dark:text-red-400 ring-1 ring-inset ring-red-500/25',
 };
 
 export function WeeklySummary({ logs, settings }: WeeklySummaryProps) {
@@ -22,43 +23,60 @@ export function WeeklySummary({ logs, settings }: WeeklySummaryProps) {
 
   const workoutCount = weekDays.filter(d => logMap.get(d)?.type === 'workout').length;
   const goal = settings.weeklyGoal;
+  const met = workoutCount >= goal;
 
   return (
     <Card>
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-semibold text-gray-800 dark:text-gray-100">Esta semana</h3>
-        <span className="text-sm font-semibold text-primary-600 dark:text-primary-400">
-          {workoutCount}/{goal} entrenamientos
-        </span>
+      <SectionLabel
+        action={
+          <span className="font-display text-base font-bold tabular-nums tracking-tight text-content">
+            {workoutCount}
+            <span className="text-content-subtle font-sans text-sm font-medium">/{goal}</span>
+          </span>
+        }
+      >
+        Esta semana
+      </SectionLabel>
+
+      {/* Medidor segmentado: se lee cuántas sesiones faltan, no un porcentaje. */}
+      <div className="mt-3 flex gap-1" aria-label={`${workoutCount} de ${goal} entrenamientos`}>
+        {Array.from({ length: Math.max(goal, workoutCount) }, (_, i) => (
+          <span
+            key={i}
+            className={`h-1.5 flex-1 rounded-full origin-left animate-meter ${
+              i < workoutCount ? (met ? 'bg-primary-500' : 'bg-primary-500/75') : 'bg-surface-3'
+            }`}
+            style={{ animationDelay: `${i * 55}ms` }}
+          />
+        ))}
       </div>
 
-      {/* Progress bar */}
-      <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2 mb-4">
-        <div
-          className="bg-primary-500 h-2 rounded-full transition-all"
-          style={{ width: `${Math.min((workoutCount / goal) * 100, 100)}%` }}
-        />
-      </div>
-
-      {/* Day dots */}
-      <div className="flex gap-2 justify-between">
+      {/* Semana */}
+      <div className="mt-4 flex justify-between gap-1.5">
         {weekDays.map(date => {
           const log = logMap.get(date);
           const isToday = date === today;
-          const dotColor = log ? TYPE_COLORS[log.type] : 'bg-gray-200 dark:bg-gray-600';
+          const style = log ? TYPE_STYLES[log.type] : 'bg-surface-3 text-content-subtle';
 
           return (
-            <div key={date} className="flex flex-col items-center gap-1">
-              <span className={`text-[10px] font-medium ${isToday ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'}`}>
+            <div key={date} className="flex flex-1 flex-col items-center gap-1.5">
+              <span
+                className={`text-[10px] font-semibold uppercase tracking-wide ${
+                  isToday ? 'text-content' : 'text-content-subtle'
+                }`}
+              >
                 {getDayName(date)}
               </span>
-              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white ${dotColor} ${isToday ? 'ring-2 ring-primary-500 ring-offset-1' : ''}`}>
-                {log?.type === 'workout' && <Check size={13} strokeWidth={3} />}
-                {log?.type === 'rest' && <Moon size={12} />}
-                {log?.type === 'active-rest' && <Footprints size={12} />}
-                {log?.type === 'missed' && <X size={13} strokeWidth={3} />}
+              <div
+                className={`grid aspect-square w-full max-w-[38px] place-items-center rounded-xl transition-transform duration-200 ${style} ${
+                  isToday ? 'ring-2 ring-primary-500 ring-offset-2 ring-offset-surface' : ''
+                }`}
+              >
+                {log?.type === 'workout' && <Check size={14} strokeWidth={3} />}
+                {log?.type === 'rest' && <Moon size={13} />}
+                {log?.type === 'active-rest' && <Footprints size={13} />}
+                {log?.type === 'missed' && <X size={14} strokeWidth={3} />}
               </div>
-              {isToday && <div className="w-1 h-1 rounded-full bg-primary-500" />}
             </div>
           );
         })}

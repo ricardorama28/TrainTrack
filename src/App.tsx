@@ -72,8 +72,10 @@ function AppShell() {
 
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <main className="page-container">
+      <div className="relative min-h-screen bg-canvas">
+        {/* Halo de marca fijo detrás del contenido: profundidad sin ruido. */}
+        <div className="pointer-events-none fixed inset-x-0 top-0 h-72 brand-halo" aria-hidden="true" />
+        <main className="relative page-container">
           <Routes>
             <Route
               path="/"

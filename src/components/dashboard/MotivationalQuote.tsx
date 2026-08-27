@@ -56,11 +56,11 @@ export function MotivationalQuote() {
   const slot = getTimeSlot(now.getHours());
   const message = MESSAGES[day][slot];
 
+  // Antes: caja lima centrada, un bloque más compitiendo por atención.
+  // Ahora: nota editorial con filete de marca — presente, pero en su sitio.
   return (
-    <div className="px-4 py-3 bg-primary-50 dark:bg-primary-900/20 rounded-2xl border border-primary-100 dark:border-primary-800">
-      <p className="text-sm text-primary-700 dark:text-primary-300 font-medium text-center">
-        {message}
-      </p>
-    </div>
+    <p className="border-l-2 border-primary-500/60 py-1 pl-4 text-[13px] italic leading-relaxed text-content-muted">
+      {message}
+    </p>
   );
 }

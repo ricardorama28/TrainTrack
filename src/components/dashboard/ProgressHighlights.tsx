@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Trophy, ArrowUp, Minus } from 'lucide-react';
-import { Card } from '../ui/Card';
+import { Card, SectionLabel } from '../ui/Card';
 import {
   getExercisePerformances, getLatestPRs, detectTrend, detectStalled, getCurrentLoadBlock,
 } from '../../lib/analytics';
@@ -53,24 +53,32 @@ export function ProgressHighlights({ logs, exercises, settings }: ProgressHighli
   if (highlights.length === 0) return null;
 
   const Icon: Record<Kind, typeof Trophy> = { pr: Trophy, up: ArrowUp, stalled: Minus };
-  const color: Record<Kind, string> = {
-    pr: 'text-accent-500 dark:text-accent-400',
-    up: 'text-primary-600 dark:text-primary-400',
-    stalled: 'text-gray-500 dark:text-gray-400',
+  // El icono va sobre un disco tintado: separa las tres señales de un vistazo
+  // sin pintar la fila entera de color.
+  const chip: Record<Kind, string> = {
+    pr:      'bg-accent-500/12 text-accent-600 dark:text-accent-400',
+    up:      'bg-primary-500/12 text-primary-600 dark:text-primary-400',
+    stalled: 'bg-surface-3 text-content-subtle',
   };
 
   return (
     <Card>
-      <p className="text-[11px] font-bold uppercase tracking-wider text-primary-500 mb-2">Progreso</p>
-      <div className="space-y-1.5">
+      <SectionLabel>Progreso</SectionLabel>
+      <div className="mt-3 divide-y divide-hairline">
         {highlights.map((h, i) => {
           const I = Icon[h.kind];
           return (
-            <div key={i} className="flex items-center gap-2 text-sm">
-              <I size={15} strokeWidth={2.5} className={`shrink-0 ${color[h.kind]}`} />
-              <span className="font-medium text-gray-800 dark:text-gray-100 truncate">{h.name}</span>
-              <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto shrink-0 tabular-nums">
-                {h.weight > 0 ? `${h.weight} kg · ` : ''}{h.text}
+            <div key={i} className="flex items-center gap-2.5 py-2 first:pt-0 last:pb-0">
+              <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-lg ${chip[h.kind]}`}>
+                <I size={13} strokeWidth={2.5} />
+              </span>
+              <span className="truncate text-sm font-medium text-content">{h.name}</span>
+              <span className="ml-auto shrink-0 text-xs tabular-nums text-content-muted">
+                {h.weight > 0 && (
+                  <span className="font-semibold text-content">{h.weight} kg</span>
+                )}
+                {h.weight > 0 ? ' · ' : ''}
+                {h.text}
               </span>
             </div>
           );

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Dumbbell, ArrowRight, Timer, Calendar, ClipboardList } from 'lucide-react';
+import { Dumbbell, ArrowRight, Timer, Calendar, ClipboardList, Plus } from 'lucide-react';
 import { StreakCard } from '../components/dashboard/StreakCard';
 import { WeeklySummary } from '../components/dashboard/WeeklySummary';
 import { MotivationalQuote } from '../components/dashboard/MotivationalQuote';
@@ -49,36 +49,43 @@ export function Dashboard({ logs, routines, exercises, settings }: DashboardProp
                  ?? null;
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2.5">
-          <Logo size={34} className="text-primary-500 shrink-0" />
-          <div>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">{formatDateLong(todayStr())}</p>
-            <h1 className="text-2xl font-display font-bold tracking-tight text-gray-900 dark:text-white">
-              {firstName ? `¡Hola, ${firstName}!` : <>Train<span className="text-primary-500">Track</span></>}
-            </h1>
+    <div className="stagger space-y-4">
+      {/* Cabecera editorial: fecha en overline, saludo en display grande.
+          La marca queda en el logo, no repartida por toda la pantalla. */}
+      <header className="flex items-end justify-between gap-4 pb-1">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <Logo size={18} className="shrink-0 text-primary-500" />
+            <p className="text-overline uppercase text-content-subtle">{formatDateLong(todayStr())}</p>
           </div>
+          <h1 className="mt-2 truncate font-display text-[2rem] font-bold leading-none tracking-[-0.035em] text-content">
+            {firstName ? `Hola, ${firstName}` : <>Train<span className="text-primary-500">Track</span></>}
+          </h1>
         </div>
         {!todayLog && (
-          <Button size="sm" onClick={() => navigate('/calendar')}>
-            + Registrar hoy
+          <Button size="sm" className="shrink-0" onClick={() => navigate('/calendar')}>
+            <Plus size={15} strokeWidth={2.5} /> Hoy
           </Button>
         )}
-      </div>
+      </header>
 
       {activeSession && (
         <button
           onClick={() => navigate('/routines')}
-          className="w-full flex items-center gap-3 rounded-2xl border border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20 px-4 py-3 text-left active:scale-[0.99] transition"
+          className="group flex w-full items-center gap-3 rounded-card bg-ink-900 px-4 py-3.5 text-left transition-transform duration-200 ease-out-expo active:scale-[0.985]"
         >
-          <Dumbbell size={24} className="text-primary-600 dark:text-primary-400 shrink-0" />
+          <span className="relative grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-500/15 text-primary-300">
+            <span className="absolute inset-0 animate-ping rounded-xl bg-primary-500/20" aria-hidden="true" />
+            <Dumbbell size={17} className="relative" />
+          </span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">Entrenamiento en curso</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{activeSession.routineName}</p>
+            <p className="truncate text-sm font-semibold text-white">Entrenamiento en curso</p>
+            <p className="truncate text-xs text-white/50">{activeSession.routineName}</p>
           </div>
-          <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary-600 dark:text-primary-400">Continuar <ArrowRight size={15} strokeWidth={2.5} /></span>
+          <span className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-primary-300">
+            Continuar
+            <ArrowRight size={15} strokeWidth={2.5} className="transition-transform duration-200 group-hover:translate-x-0.5" />
+          </span>
         </button>
       )}
 

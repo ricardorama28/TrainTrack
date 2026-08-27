@@ -10,12 +10,19 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-      <div className="mb-3 text-gray-300 dark:text-gray-600 [&>svg]:w-10 [&>svg]:h-10" aria-hidden="true">
-        {icon ?? <Inbox size={40} strokeWidth={1.5} />}
+    <div className="flex flex-col items-center justify-center py-14 px-6 text-center">
+      {/* El icono va dentro de un disco de superficie: deja de flotar suelto. */}
+      <div
+        className="mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-surface-2 ring-1 ring-inset ring-hairline
+                   text-content-subtle [&>svg]:w-7 [&>svg]:h-7"
+        aria-hidden="true"
+      >
+        {icon ?? <Inbox strokeWidth={1.5} />}
       </div>
-      <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200 mb-1">{title}</h3>
-      {description && <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{description}</p>}
+      <h3 className="font-display text-lg font-bold tracking-tight text-content mb-1">{title}</h3>
+      {description && (
+        <p className="text-sm leading-relaxed text-content-muted max-w-[34ch] mb-5">{description}</p>
+      )}
       {action}
     </div>
   );

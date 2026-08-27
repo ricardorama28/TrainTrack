@@ -1,5 +1,5 @@
 import { Check, Moon, Footprints, X } from 'lucide-react';
-import { Card } from '../ui/Card';
+import { Card, SectionLabel } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { getUpcomingDays, formatDateShort, getDayName } from '../../lib/dates';
 import type { WorkoutLog, Routine, Settings } from '../../types';
@@ -16,8 +16,8 @@ export function UpcomingDays({ logs, settings }: UpcomingDaysProps) {
 
   return (
     <Card>
-      <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">Próximos días</h3>
-      <div className="space-y-2">
+      <SectionLabel>Próximos días</SectionLabel>
+      <div className="mt-2 divide-y divide-hairline">
         {upcoming.map((date, i) => {
           const log = logMap.get(date);
           const dayNum = new Date(date + 'T00:00:00').getDay();
@@ -37,8 +37,8 @@ export function UpcomingDays({ logs, settings }: UpcomingDaysProps) {
           }
 
           return (
-            <div key={date} className="flex items-center justify-between py-1">
-              <span className={`text-sm ${i === 0 ? 'font-semibold text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300'}`}>
+            <div key={date} className="flex items-center justify-between gap-3 py-2.5 first:pt-1 last:pb-0">
+              <span className={`text-sm ${i === 0 ? 'font-semibold text-content' : 'text-content-muted'}`}>
                 {label}
               </span>
               {badge}
